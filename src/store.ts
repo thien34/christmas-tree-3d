@@ -11,7 +11,7 @@ interface AppState {
   /** Ảnh người dùng thêm vào, dưới dạng object URL. */
   photoUrls: string[];
   debugMode: boolean;
-  /** Dòng trạng thái trên cùng; bắt đầu bằng "ERROR" thì hiện màu lỗi. */
+  /** Dòng trạng thái trên cùng; bắt đầu bằng "ERROR: " thì hiện kiểu lỗi (tiền tố này không hiện ra). */
   status: string;
 }
 
@@ -26,7 +26,7 @@ export const useStore = create<AppState>(() => ({
   pinch: null,
   photoUrls: [],
   debugMode: false,
-  status: 'INITIALIZING...',
+  status: 'Starting…',
 }));
 
 /** Bảng màu của theme đang chọn. */

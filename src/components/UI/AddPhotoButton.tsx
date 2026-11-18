@@ -1,5 +1,6 @@
 import { useRef, type ChangeEvent } from 'react';
 import { addPhotos, useStore } from '../../store';
+import { AddPhotoIcon } from './icons';
 
 export const AddPhotoButton = () => {
   const photoCount = useStore((s) => s.photoUrls.length);
@@ -14,9 +15,15 @@ export const AddPhotoButton = () => {
   return (
     <>
       <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={handleChange} />
-      <button type="button" className="button button--photo" onClick={() => inputRef.current?.click()}>
-        <span>Photos</span>
-        {photoCount > 0 && <span className="button__badge">{photoCount}</span>}
+      <button
+        type="button"
+        className="icon-button"
+        title="Add photos"
+        aria-label="Add photos"
+        onClick={() => inputRef.current?.click()}
+      >
+        <AddPhotoIcon />
+        {photoCount > 0 && <span className="icon-button__badge">{photoCount}</span>}
       </button>
     </>
   );

@@ -59,9 +59,9 @@ const createGestureHandler = () => {
     }
 
     if (debugMode) {
-      const pinchLabel = pinch ? ' [PINCH]' : '';
-      if (!gesture) setStatus(`AI READY: NO HAND${pinchLabel}`);
-      else if (isConfident) setStatus(`DETECTED: ${gesture.categoryName}${pinchLabel}`);
+      const pinchLabel = pinch ? ' · pinch' : '';
+      if (!gesture) setStatus(`No hand detected${pinchLabel}`);
+      else if (isConfident) setStatus(`Gesture: ${gesture.categoryName}${pinchLabel}`);
     }
   };
 };
@@ -88,7 +88,7 @@ export const useHandTracking = (
     const stopCamera = () => stream?.getTracks().forEach((track) => track.stop());
 
     const start = async () => {
-      setStatus('DOWNLOADING AI...');
+      setStatus('Loading hand tracking…');
       // Tải lazy để cảnh 3D hiện ra trước, không phải chờ thư viện MediaPipe
       const vision = await import('@mediapipe/tasks-vision');
       const fileset = await vision.FilesetResolver.forVisionTasks(WASM_URL);
@@ -101,7 +101,7 @@ export const useHandTracking = (
       if (cancelled) return model.close();
       recognizer = model;
 
-      setStatus('REQUESTING CAMERA...');
+      setStatus('Waiting for camera…');
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Camera API not available');
       stream = await navigator.mediaDevices.getUserMedia({ video: true });
       if (cancelled) return stopCamera();
@@ -110,7 +110,7 @@ export const useHandTracking = (
       await video.play();
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      setStatus('AI READY: SHOW HAND');
+      setStatus('Ready · show your hand');
 
       const handleGestures = createGestureHandler();
       const drawingUtils = new vision.DrawingUtils(ctx);

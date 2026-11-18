@@ -23,8 +23,7 @@ export default function App() {
     <div className="app">
       {/* Nhấp đúp để chuyển qua lại giữa tán loạn và thành cây */}
       <div className="scene" onDoubleClick={toggleSceneState}>
-        {/* "percentage" = PCFShadowMap; three r187 đã bỏ PCFSoftShadowMap (mặc định cũ của R3F) */}
-        <Canvas dpr={[1, 2]} shadows="percentage">
+        <Canvas dpr={[1, 2]}>
           <Experience
             sceneState={sceneState}
             photoUrls={photos}

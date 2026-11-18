@@ -120,17 +120,13 @@ export const GiftBoxes = ({ state, themeColors, treeStyle }: GiftBoxesProps) => 
       <instancedMesh
         ref={boxesRef}
         args={[geometry, undefined, count]}
-        frustumCulled={false}
-        castShadow
-        receiveShadow>
+        frustumCulled={false}>
         <meshStandardMaterial roughness={0.3} metalness={0.1} />
       </instancedMesh>
       <instancedMesh
         ref={ribbonsRef}
         args={[geometry, undefined, count * RIBBON_PARTS_PER_GIFT]}
-        frustumCulled={false}
-        castShadow
-        receiveShadow>
+        frustumCulled={false}>
         <meshStandardMaterial color={themeColors.gold} roughness={0.15} metalness={1} />
       </instancedMesh>
     </>

@@ -122,9 +122,7 @@ export const ChristmasBalls = ({ state, themeColors, treeStyle }: ChristmasBalls
           }}
           geometry={geometry}
           scale={ball.scale}
-          rotation={ball.rotation}
-          castShadow
-          receiveShadow>
+          rotation={ball.rotation}>
           <meshStandardMaterial roughness={0.15} metalness={0.9} emissiveIntensity={BASE_EMISSIVE} envMapIntensity={1.5} />
         </mesh>
       ))}

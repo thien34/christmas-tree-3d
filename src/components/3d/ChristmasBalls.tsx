@@ -1,17 +1,23 @@
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
-import { randomAngle, randomEuler, randomInCube, randomItem, randomRange, randomRotationSpeed } from '../../utils/random';
+import { randomAngle, randomInCube, randomItem, randomRange } from '../../utils/random';
 import { sampleOrnamentPoint } from '../../utils/treePositions';
-import { createMorphingItems, moveTowardsState, spin, useTreeTargets, type TreeTargetSampler } from './shared/motion';
+import { createMorphingItems, moveTowardsState, useTreeTargets, type TreeTargetSampler } from './shared/motion';
+
+/*
+ * 400 quả cầu vẽ bằng một InstancedMesh (1 draw call).
+ * Lấp lánh = nhân màu instance lên > 1 để Bloom bắt sáng, kèm phóng to nhẹ và ngả sang ánh vàng.
+ */
 
 const MOVE_SPEED = 1.5;
-const BASE_EMISSIVE = 0.5;
 /** Tỉ lệ quả cầu có hiệu ứng lấp lánh vàng. */
 const SPARKLE_CHANCE = 0.25;
+/** Lúc lấp lánh mạnh nhất, quả cầu sáng gấp (1 + SPARKLE_GLOW) lần bình thường. */
+const SPARKLE_GLOW = 4;
 const SCALE_RANGES: [number, number][] = [
   [0.5, 0.8],
   [0.4, 0.7],
@@ -43,8 +49,6 @@ const createBalls = (count: number) =>
     const [minScale, maxScale] = randomItem(SCALE_RANGES);
     return {
       chaosPos: randomInCube(60),
-      rotation: randomEuler(),
-      rotationSpeed: randomRotationSpeed(1),
       scale: randomRange(minScale, maxScale),
       colorSeed: Math.random(),
       sparkle: Math.random() < SPARKLE_CHANCE ? createSparkle() : null,
@@ -58,19 +62,20 @@ const sparkleAmount = (sparkle: Sparkle, time: number) => {
   return (Math.sin(time * sparkle.speed + sparkle.phase) + 1) / 2;
 };
 
-type BallMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
-
 const sampleBallTarget: TreeTargetSampler = (style, _index, _count, out) =>
   sampleOrnamentPoint(style, out).multiplyScalar(0.95);
 
-/** Các quả cầu kim loại treo trên cây; khoảng 1/4 số quả thỉnh thoảng lấp lánh ánh vàng. */
+// Biến tạm dùng lại mỗi khung hình
+const matrix = new THREE.Matrix4();
+const color = new THREE.Color();
+
+/** Các quả cầu kim loại treo trên cây; khoảng 1/4 số quả thỉnh thoảng lấp lánh ánh vàng khi cây đã thành hình. */
 export const ChristmasBalls = () => {
   const count = CONFIG.counts.ornaments;
   const themeColors = useThemeColors();
-  const meshRefs = useRef<(BallMesh | null)[]>([]);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
 
   const balls = useMemo(() => createBalls(count), [count]);
-  const geometry = useMemo(() => new THREE.SphereGeometry(1, 16, 16), []);
   const gold = useMemo(() => new THREE.Color(themeColors.gold), [themeColors.gold]);
   const baseColors = useMemo(
     () => balls.map((ball) => new THREE.Color(pickColor(themeColors.ornamentColors, ball.colorSeed))),
@@ -78,50 +83,34 @@ export const ChristmasBalls = () => {
   );
   useTreeTargets(balls, sampleBallTarget);
 
-  // Đổi màu theo theme
-  useLayoutEffect(() => {
-    meshRefs.current.forEach((mesh, i) => {
-      mesh?.material.color.copy(baseColors[i]);
-      mesh?.material.emissive.copy(baseColors[i]);
-    });
-  }, [baseColors]);
-
   useFrame(({ clock }, delta) => {
-    const time = clock.elapsedTime;
-    const state = useStore.getState().sceneState;
+    const mesh = meshRef.current;
+    if (!mesh) return;
+    const { sceneState } = useStore.getState();
 
     balls.forEach((ball, i) => {
-      const mesh = meshRefs.current[i];
-      if (!mesh) return;
+      moveTowardsState(ball, sceneState, MOVE_SPEED, delta);
+      const sparkle = sceneState === 'FORMED' && ball.sparkle ? sparkleAmount(ball.sparkle, clock.elapsedTime) : 0;
+      const scale = ball.scale * (1 + sparkle * 0.3);
 
-      moveTowardsState(ball, state, MOVE_SPEED, delta);
-      mesh.position.copy(ball.currentPos);
-      spin(mesh.rotation, ball.rotationSpeed, delta);
-
-      if (state !== 'FORMED') return;
-
-      // Lấp lánh: sáng hơn, to hơn một chút và ánh vàng
-      const amount = ball.sparkle ? sparkleAmount(ball.sparkle, time) : 0;
-      mesh.scale.setScalar(ball.scale * (1 + amount * 0.3));
-      mesh.material.emissiveIntensity = amount > 0 ? 1 + amount * 3 : BASE_EMISSIVE;
-      mesh.material.emissive.copy(baseColors[i]).lerp(gold, amount * 0.8);
+      mesh.setMatrixAt(i, matrix.makeScale(scale, scale, scale).setPosition(ball.currentPos));
+      mesh.setColorAt(
+        i,
+        color
+          .copy(baseColors[i])
+          .lerp(gold, sparkle * 0.8)
+          .multiplyScalar(1 + sparkle * SPARKLE_GLOW),
+      );
     });
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   });
 
   return (
-    <group>
-      {balls.map((ball, i) => (
-        <mesh
-          key={i}
-          ref={(mesh) => {
-            meshRefs.current[i] = mesh as BallMesh | null;
-          }}
-          geometry={geometry}
-          scale={ball.scale}
-          rotation={ball.rotation}>
-          <meshStandardMaterial roughness={0.15} metalness={0.9} emissiveIntensity={BASE_EMISSIVE} envMapIntensity={1.5} />
-        </mesh>
-      ))}
-    </group>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled={false}>
+      <sphereGeometry args={[1, 16, 16]} />
+      <meshStandardMaterial roughness={0.15} metalness={0.9} envMapIntensity={1.5} />
+    </instancedMesh>
   );
 };

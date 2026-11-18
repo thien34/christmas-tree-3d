@@ -79,7 +79,7 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 
 - **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây. Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm.
 - **25.000 hạt lá chạy trên GPU:** cả hai vị trí của từng hạt được nạp sẵn vào card đồ hoạ, *shader* (chương trình nhỏ chạy trên GPU, viết bằng GLSL) tự trộn giữa hai vị trí và tô màu tối ở gốc, sáng dần lên ngọn.
-- **Instancing:** 300 hộp quà và 400 bóng đèn được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*). Riêng hộp quà giảm từ 1.800 xuống 2 draw call.
+- **Instancing:** 400 quả cầu, 300 hộp quà và 400 bóng đèn được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*). Riêng hộp quà giảm từ 1.800 xuống 2 draw call.
 - **Ba kiểu cây:** vị trí trên cây được tính bằng toán: hình nón (dày ở gốc, thưa ở ngọn), nhiều hình nón cụt chồng lên nhau, hoặc các nhánh xoắn quanh thân. Đổi kiểu chỉ tính lại vị trí đích, các món trang trí tự bay sang chỗ mới.
 - **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay (khoảng cách đầu ngón cái và ngón trỏ) và đếm ngón.
 - **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao); *Vignette* làm tối dần về các góc màn hình.

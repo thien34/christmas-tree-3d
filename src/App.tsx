@@ -2,7 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Experience } from './components/3d';
 import { GestureController } from './components/GestureController';
-import { DebugButton, StatusText, AddPhotoButton, uiStyles } from './components/UI';
+import { AddPhotoButton, DebugButton, StatusText } from './components/UI';
 import { useSceneState, useDebugMode, useAIStatus, usePhotos, useZoomState, useTheme, useTreeStyle } from './hooks';
 
 export default function GrandTreeApp() {
@@ -15,17 +15,14 @@ export default function GrandTreeApp() {
   const { treeStyle, setStyleByFingerCount } = useTreeStyle();
 
   const handlePhotosAdded = (files: FileList) => {
-    addPhotos(files).catch((error) => {
-      console.error('Error adding photos:', error);
-      setAiStatus(`ERROR: ${error.message}`);
-    });
+    const skipped = addPhotos(files);
+    if (skipped > 0) setAiStatus(`ERROR: ${skipped} file(s) skipped, not an image`);
   };
 
   return (
-    <div style={uiStyles.container}>
-      <div 
-        style={uiStyles.canvasWrapper}
-        onDoubleClick={toggleSceneState}>
+    <div className="app">
+      {/* Nhấp đúp để chuyển qua lại giữa tán loạn và thành cây */}
+      <div className="scene" onDoubleClick={toggleSceneState}>
         <Canvas
           dpr={[1, 2]}
           gl={{ toneMapping: THREE.ReinhardToneMapping }}
@@ -43,12 +40,12 @@ export default function GrandTreeApp() {
         onFingerCount={setStyleByFingerCount}
       />
 
-      <div style={uiStyles.buttonContainer}>
-        <AddPhotoButton onPhotosAdded={handlePhotosAdded} photoCount={photos.length} />
-        <DebugButton debugMode={debugMode} onClick={toggleDebugMode} />
+      <div className="toolbar">
+        <AddPhotoButton photoCount={photos.length} onPhotosAdded={handlePhotosAdded} />
+        <DebugButton active={debugMode} onClick={toggleDebugMode} />
       </div>
 
-      <StatusText aiStatus={aiStatus} />
+      <StatusText status={aiStatus} />
     </div>
   );
 }

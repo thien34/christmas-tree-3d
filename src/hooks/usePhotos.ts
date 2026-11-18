@@ -1,46 +1,29 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
+/**
+ * Danh sách ảnh người dùng thêm vào, lưu dưới dạng object URL
+ * (nhẹ hơn data URL base64 và không phải đọc cả file vào bộ nhớ JS).
+ */
 export const usePhotos = () => {
   const [photos, setPhotos] = useState<string[]>([]);
+  const urlsRef = useRef<string[]>([]);
 
-  const addPhoto = useCallback((file: File) => {
-    return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        setPhotos((prev) => [...prev, dataUrl]);
-        resolve(dataUrl);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
+  /** Thêm các file ảnh; trả về số file bị bỏ qua vì không phải ảnh. */
   const addPhotos = useCallback((files: FileList | File[]) => {
-    const fileArray = Array.from(files);
-    const promises = fileArray.map((file) => {
-      if (!file.type.startsWith('image/')) {
-        return Promise.reject(new Error(`${file.name} is not an image`));
-      }
-      return addPhoto(file);
-    });
-    return Promise.all(promises);
-  }, [addPhoto]);
+    const all = Array.from(files);
+    const images = all.filter((file) => file.type.startsWith('image/'));
+    const urls = images.map((file) => URL.createObjectURL(file));
 
-  const removePhoto = useCallback((index: number) => {
-    setPhotos((prev) => prev.filter((_, i) => i !== index));
+    urlsRef.current.push(...urls);
+    setPhotos((prev) => [...prev, ...urls]);
+    return all.length - images.length;
   }, []);
 
-  const clearPhotos = useCallback(() => {
-    setPhotos([]);
+  // Giải phóng các object URL khi component unmount.
+  useEffect(() => {
+    const urls = urlsRef.current;
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
   }, []);
 
-  return {
-    photos,
-    addPhoto,
-    addPhotos,
-    removePhoto,
-    clearPhotos
-  };
+  return { photos, addPhotos };
 };
-

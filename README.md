@@ -1,10 +1,16 @@
 # Cây thông Noel 3D
 
-Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây, quà xếp quanh gốc. Bạn có thể đổi màu, đổi kiểu cây và treo ảnh của mình lên cây như ảnh Polaroid.
+Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây giữa trời đêm tuyết rơi, quà xếp quanh gốc. Bạn có thể đổi màu, đổi kiểu cây và treo ảnh của mình lên cây như ảnh Polaroid.
 
 | Xoè tay: tán loạn | Nắm tay: thành cây |
 | --- | --- |
-| <img src="docs/tree-chaos.jpg" alt="Các món trang trí bay tán loạn" width="400" /> | <img src="docs/tree-formed.jpg" alt="Cây thông đã tụ lại thành hình" width="400" /> |
+| <img src="docs/tree-chaos.jpg" alt="Lá cây, quả cầu và hộp quà bay tán loạn" width="400" /> | <img src="docs/tree-formed.jpg" alt="Cây thông đã tụ lại thành hình, quà xếp quanh gốc" width="400" /> |
+
+Có 3 kiểu cây và 4 bảng màu, đổi bằng cử chỉ tay:
+
+| Cổ điển · Giáng sinh | Nhiều tầng · hồng phấn | Xoắn ốc · xanh băng |
+| --- | --- | --- |
+| <img src="docs/tree-formed.jpg" alt="Cây kiểu cổ điển, màu Giáng sinh" width="265" /> | <img src="docs/tree-tiered.jpg" alt="Cây nhiều tầng, màu hồng phấn" width="265" /> | <img src="docs/tree-spiral.jpg" alt="Cây xoắn ốc, màu xanh băng" width="265" /> |
 
 ## Cách chạy
 
@@ -48,12 +54,12 @@ Lần đầu mở trang cần Internet để tải model nhận diện tay, nên
 
 | Cử chỉ | Kết quả |
 | --- | --- |
-| ✋ Xoè tay | Các món trang trí bay tán loạn |
-| ✊ Nắm tay | Tụ lại thành cây |
-| 👍 Giơ ngón cái | Đổi màu: Giáng sinh → hồng → tím → xanh |
-| ☝️ 1 ngón | Cây hình nón cổ điển |
-| ✌️ 2 ngón | Cây nhiều tầng |
-| 3 ngón (trỏ, giữa, áp út) | Cây xoắn ốc |
+| ✋ Xoè tay | Lá cây và đồ trang trí bay tán loạn |
+| ✊ Nắm tay | Tụ lại thành cây, hộp quà xếp quanh gốc |
+| 👍 Giơ ngón cái | Đổi bảng màu: Giáng sinh (xanh thông, đỏ, vàng) → hồng phấn → tím → xanh băng |
+| ☝️ 1 ngón | Cây cổ điển: nhiều tầng tán mỏng |
+| ✌️ 2 ngón | Cây nhiều tầng: 4 tầng tán xoè rộng |
+| 3 ngón (trỏ, giữa, áp út) | Cây xoắn ốc: tán và dây đèn quấn quanh thân |
 | 🤏 Chụm ngón cái và ngón trỏ | Phóng to một tấm ảnh; thả tay để ảnh về chỗ cũ. Mỗi lần chụm lại ra một tấm khác |
 
 ## Gặp lỗi?
@@ -77,10 +83,12 @@ Thư viện nhận diện tay `@mediapipe/tasks-vision` (từ bản 1.x) tự g�
 
 Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông qua **React Three Fiber** (dùng React để mô tả cảnh 3D), build bằng Vite 8.
 
-- **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây. Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm.
+- **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây (hộp quà thì là một chỗ trên mặt đất quanh gốc). Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm.
 - **42.000 lá kim chạy trên GPU:** cả hai vị trí của từng lá được nạp sẵn vào card đồ hoạ, *shader* (chương trình nhỏ chạy trên GPU, viết bằng GLSL) tự trộn giữa hai vị trí, vẽ mỗi hạt thành một lá kim và tô tối ở chỗ khuất, sáng ở đầu cành.
 - **Instancing:** 150 quả cầu, 34 hộp quà và 320 bóng đèn được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*).
 - **Ba kiểu cây:** cả ba dùng chung một công thức, là hình nón gồm nhiều tầng tán xoè ra ở mép dưới. Kiểu classic có 9 tầng mỏng, tiered có 4 tầng xoè rộng, spiral thì các tầng nối nhau thành một dải xoắn ốc. Đổi kiểu chỉ tính lại vị trí đích, lá và đồ trang trí tự bay sang chỗ mới.
+- **Ảnh Polaroid:** mỗi ảnh có một chỗ treo cố định bên ngoài tán lá, mặt hướng ra ngoài; ảnh không vuông được cắt lấy phần giữa cho vừa khung. Mỗi lần chụm tay phóng to một ảnh chưa xem.
+- **Khung cảnh:** nền trời đêm chuyển màu, nền tuyết hắt sáng quanh gốc và tuyết rơi (cũng chạy trên GPU).
 - **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay (khoảng cách đầu ngón cái và ngón trỏ) và đếm ngón.
 - **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao) nhưng bỏ qua ảnh Polaroid; *Vignette* làm tối dần về các góc màn hình; *tone mapping* nén vùng quá sáng lại để không bị cháy trắng.
 
@@ -88,9 +96,12 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 
 | Muốn đổi | Sửa ở |
 | --- | --- |
-| Số hạt lá, quả cầu, đèn, hộp quà; kích thước cây | `src/constants/config.ts` |
+| Số lá, quả cầu, đèn, hộp quà; kích thước cây | `src/constants/config.ts` |
 | Bảng màu các theme | `src/constants/themes.ts` |
-| Hình dạng các kiểu cây | `src/utils/treePositions.ts` |
+| Hình dạng các kiểu cây (số tầng tán, độ xoè, xoắn) | `src/utils/treePositions.ts` |
+| Hình dáng và màu của lá | `src/shaders/FoliageMaterial.ts` |
+| Nền trời, tuyết rơi, độ sáng và Bloom | `src/components/3d/scene/` |
+| Kích thước, độ sáng của ảnh Polaroid | `src/components/3d/photos/` |
 | Ngưỡng nhận diện cử chỉ | `src/gesture/handGestures.ts` |
 
 **Cấu trúc thư mục**
@@ -99,17 +110,17 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 src/
 ├── App.tsx                 # Ghép mọi thứ lại: cảnh 3D, nhận diện tay, thanh nút
 ├── components/
-│   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đèn, hộp quà, ngôi sao, ảnh
-│   │   ├── photos/         # Ảnh Polaroid và cách chọn ảnh theo vị trí tay
-│   │   ├── scene/          # Camera, ánh sáng, nền trời, hậu kỳ
+│   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đèn, hộp quà, ngôi sao, thân cây, ảnh
+│   │   ├── photos/         # Ảnh Polaroid: treo lên cây, chọn ảnh để phóng to
+│   │   ├── scene/          # Camera, ánh sáng, nền trời, tuyết rơi, hậu kỳ
 │   │   └── shared/         # Chuyển động tán loạn ↔ thành cây dùng chung
-│   ├── UI/                 # Nút thêm ảnh, nút debug, dòng trạng thái
+│   ├── UI/                 # Nút thêm ảnh, nút debug, icon, dòng trạng thái
 │   └── GestureController.tsx
 ├── gesture/                # Camera + MediaPipe → cập nhật store theo cử chỉ
 ├── store.ts                # Trạng thái dùng chung của app (zustand): theme, kiểu cây, ảnh, zoom...
 ├── constants/              # Cấu hình và bảng màu
 ├── shaders/                # Shader GLSL cho hạt lá
-└── utils/                  # Hàm ngẫu nhiên, tính vị trí trên cây
+└── utils/                  # Hàm ngẫu nhiên, hình dạng cây và vị trí trên cây
 ```
 
 Lệnh khác: `pnpm build` (kiểm tra kiểu + build vào `dist/`), `pnpm preview` (xem bản build), `pnpm typecheck` (chỉ kiểm tra kiểu).

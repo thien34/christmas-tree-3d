@@ -1,4 +1,3 @@
-/* eslint-disable */
 // @ts-nocheck
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';

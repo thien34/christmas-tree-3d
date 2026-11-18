@@ -116,7 +116,6 @@ src/
 | **3D Helpers** | @react-three/drei, @react-three/postprocessing |
 | **AI** | MediaPipe Tasks Vision |
 | **Build** | Vite 7 |
-| **Linting** | ESLint 9 |
 
 ## 📊 Thống kê
 
@@ -135,11 +134,8 @@ src/
 ## 🧪 Testing
 
 ```bash
-# Lint
-pnpm lint
-
 # Type check
-pnpm build
+pnpm typecheck
 ```
 
 ## 🤝 Contributing

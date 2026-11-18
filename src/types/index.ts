@@ -58,10 +58,18 @@ export interface PhotoOrnamentData extends ObjectData {
   zoomScale: number;
 }
 
+/** Toạ độ màn hình chuẩn hoá 0–1, gốc ở góc trên bên trái. */
+export interface HandPosition {
+  x: number;
+  y: number;
+}
+
+export type FingerCount = 1 | 2 | 3;
+
 export interface ZoomState {
   active: boolean;
-  targetIndex: number;
-  handPosition?: { x: number; y: number }; // Screen space coordinates (0-1)
+  /** Vị trí tay lúc bắt đầu chụm, dùng để chọn ảnh cần phóng to. */
+  handPosition?: HandPosition;
 }
 
 export interface ChristmasElementData extends ObjectData {
@@ -88,15 +96,6 @@ export interface GiftBoxData extends ObjectData {
   boxColor: string;
   size: number;
   timeOffset: number;
-}
-
-export interface GestureControllerProps {
-  onGesture: (gesture: SceneState) => void;
-  onStatus: (status: string) => void;
-  debugMode: boolean;
-  onPinch?: (isPinching: boolean, handPosition?: { x: number; y: number }) => void;
-  onThumbUp?: () => void;
-  onFingerCount?: (count: 1 | 2 | 3) => void;
 }
 
 // Tree style types

@@ -1,22 +1,23 @@
+import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Experience } from './components/3d';
 import { GestureController } from './components/GestureController';
 import { AddPhotoButton, DebugButton, StatusText } from './components/UI';
-import { useSceneState, useDebugMode, useAIStatus, usePhotos, useZoomState, useTheme, useTreeStyle } from './hooks';
+import { useDebugMode, usePhotos, useSceneState, useTheme, useTreeStyle, useZoomState } from './hooks';
 
-export default function GrandTreeApp() {
+export default function App() {
   const { sceneState, setSceneState, toggleSceneState } = useSceneState();
   const { debugMode, toggleDebugMode } = useDebugMode();
-  const { aiStatus, setAiStatus } = useAIStatus();
   const { photos, addPhotos } = usePhotos();
   const { zoomState, handlePinch } = useZoomState();
   const { themeColors, cycleTheme } = useTheme();
   const { treeStyle, setStyleByFingerCount } = useTreeStyle();
+  const [status, setStatus] = useState('INITIALIZING...');
 
   const handlePhotosAdded = (files: FileList) => {
     const skipped = addPhotos(files);
-    if (skipped > 0) setAiStatus(`ERROR: ${skipped} file(s) skipped, not an image`);
+    if (skipped > 0) setStatus(`ERROR: ${skipped} file(s) skipped, not an image`);
   };
 
   return (
@@ -32,9 +33,9 @@ export default function GrandTreeApp() {
       </div>
 
       <GestureController
-        onGesture={setSceneState}
-        onStatus={setAiStatus}
         debugMode={debugMode}
+        onSceneState={setSceneState}
+        onStatus={setStatus}
         onPinch={handlePinch}
         onThumbUp={cycleTheme}
         onFingerCount={setStyleByFingerCount}
@@ -45,7 +46,7 @@ export default function GrandTreeApp() {
         <DebugButton active={debugMode} onClick={toggleDebugMode} />
       </div>
 
-      <StatusText status={aiStatus} />
+      <StatusText status={status} />
     </div>
   );
 }

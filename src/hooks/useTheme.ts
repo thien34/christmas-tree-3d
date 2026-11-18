@@ -1,35 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
-import { THEMES, THEME_ORDER } from '../constants/config';
-import type { ThemeType, ThemeColors } from '../types';
+import { useCallback, useState } from 'react';
+import { THEME_ORDER, THEMES } from '../constants/config';
+import type { ThemeType } from '../types';
 
 export const useTheme = () => {
-  const [currentTheme, setCurrentTheme] = useState<ThemeType>('christmas');
-  const lastThemeChangeRef = useRef<number>(0);
-  
-  // Debounce theme change to prevent rapid switching
-  const THEME_CHANGE_COOLDOWN = 1500; // 1.5 seconds
+  const [theme, setTheme] = useState<ThemeType>('christmas');
 
   const cycleTheme = useCallback(() => {
-    const now = Date.now();
-    if (now - lastThemeChangeRef.current < THEME_CHANGE_COOLDOWN) {
-      return; // Still in cooldown
-    }
-    
-    lastThemeChangeRef.current = now;
-    setCurrentTheme(prev => {
-      const currentIndex = THEME_ORDER.indexOf(prev);
-      const nextIndex = (currentIndex + 1) % THEME_ORDER.length;
-      return THEME_ORDER[nextIndex];
-    });
+    setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
   }, []);
 
-  const themeColors: ThemeColors = THEMES[currentTheme];
-
-  return {
-    currentTheme,
-    themeColors,
-    cycleTheme,
-    setTheme: setCurrentTheme
-  };
+  return { themeColors: THEMES[theme], cycleTheme };
 };
-

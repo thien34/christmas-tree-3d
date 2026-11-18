@@ -1,25 +1,19 @@
-import { useState, useCallback, useRef } from 'react';
-import type { TreeStyle } from '../types';
+import { useCallback, useState } from 'react';
+import type { FingerCount, TreeStyle } from '../types';
 
-const TREE_STYLES: TreeStyle[] = ['classic', 'tiered', 'spiral'];
+/** 1 ngón: classic, 2 ngón: tiered, 3 ngón: spiral. */
+const STYLE_BY_FINGER_COUNT: Record<FingerCount, TreeStyle> = {
+  1: 'classic',
+  2: 'tiered',
+  3: 'spiral',
+};
 
 export const useTreeStyle = () => {
   const [treeStyle, setTreeStyle] = useState<TreeStyle>('classic');
-  const treeStyleRef = useRef<TreeStyle>('classic');
 
-  const setStyleByFingerCount = useCallback((count: 1 | 2 | 3) => {
-    const newStyle = TREE_STYLES[count - 1];
-    // Chỉ đổi nếu khác style hiện tại (dùng ref để tránh stale closure)
-    if (newStyle && newStyle !== treeStyleRef.current) {
-      treeStyleRef.current = newStyle;
-      setTreeStyle(newStyle);
-    }
+  const setStyleByFingerCount = useCallback((count: FingerCount) => {
+    setTreeStyle(STYLE_BY_FINGER_COUNT[count]);
   }, []);
 
-  return {
-    treeStyle,
-    setTreeStyle,
-    setStyleByFingerCount
-  };
+  return { treeStyle, setStyleByFingerCount };
 };
-

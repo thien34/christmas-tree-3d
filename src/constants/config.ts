@@ -72,3 +72,12 @@ export const CONFIG: Config = {
   }
 };
 
+/** Thời gian chờ giữa hai lần nhận cùng một cử chỉ, tránh đổi liên tục. */
+export const GESTURE_COOLDOWN_MS = {
+  thumbUp: 1500,
+  fingerCount: 800,
+} as const;
+
+/** Độ tin cậy tối thiểu để chấp nhận một cử chỉ từ MediaPipe. */
+export const GESTURE_MIN_SCORE = 0.4;
+

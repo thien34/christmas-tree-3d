@@ -26,7 +26,8 @@ export const GestureController = ({ onGesture, onStatus, debugMode, onPinch, onT
       onStatus('DOWNLOADING AI...');
       try {
         const vision = await FilesetResolver.forVisionTasks(
-          'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+          // Phải khớp phiên bản thư viện; Vite điền sẵn từ package.json (xem vite.config.ts)
+          `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIAPIPE_VERSION__}/wasm`
         );
         gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
           baseOptions: {

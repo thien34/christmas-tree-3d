@@ -29,7 +29,7 @@ export default function GrandTreeApp() {
         <Canvas
           dpr={[1, 2]}
           gl={{ toneMapping: THREE.ReinhardToneMapping }}
-          shadows>
+          shadows="percentage">
           <Experience sceneState={sceneState} photoUrls={photos} zoomState={zoomState} themeColors={themeColors} treeStyle={treeStyle} />
         </Canvas>
       </div>

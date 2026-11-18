@@ -100,7 +100,8 @@ export const ExperienceLights = ({ sceneState, zoomState }: ExperienceLightsProp
         color={CONFIG.colors.silver}
       />
 
-      <EffectComposer>
+      {/* multisampling mặc định đã giảm từ 8 xuống 4 ở bản 3.2; giữ 8 cho viền mịn như trước */}
+      <EffectComposer multisampling={8}>
         <Bloom
           luminanceThreshold={0.5}
           luminanceSmoothing={0.1}
@@ -109,7 +110,6 @@ export const ExperienceLights = ({ sceneState, zoomState }: ExperienceLightsProp
           mipmapBlur
         />
         <Vignette
-          eskil={false}
           offset={0.1}
           darkness={1.1}
         />

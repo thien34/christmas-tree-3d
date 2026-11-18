@@ -1,4 +1,4 @@
-import { Suspense, useRef } from 'react';
+import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import type * as THREE from 'three';
 import { useStore } from '../../store';
@@ -37,10 +37,7 @@ export const Experience = () => {
         <FairyLights />
         <GiftBoxes />
         <TopStar />
-        {/* Suspense riêng: lúc đang tải ảnh mới, phần còn lại của cây không bị ẩn đi */}
-        <Suspense fallback={null}>
-          <PhotoOrnaments />
-        </Suspense>
+        <PhotoOrnaments />
       </group>
 
       <PostEffects />

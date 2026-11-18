@@ -1,11 +1,12 @@
-import { Sparkles, Stars } from '@react-three/drei';
-import { CONFIG } from '../../../constants/config';
+import { GradientTexture, Stars } from '@react-three/drei';
+import { Snowfall } from './Snowfall';
 
-/** Nền trời: màu nền, sao và bụi lấp lánh. */
+/** Khung cảnh quanh cây: bầu trời đêm chuyển màu, sao và tuyết rơi. */
 export const Atmosphere = () => (
   <>
-    <color attach="background" args={['#000300']} />
-    <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
-    <Sparkles count={600} scale={50} size={8} speed={0.4} opacity={0.4} color={CONFIG.colors.silver} />
+    {/* Từ đỉnh trời xuống: xanh đêm đậm, sáng dần về phía chân trời, rồi tối lại ở mặt đất */}
+    <GradientTexture attach="background" stops={[0, 0.55, 1]} colors={['#070d24', '#1b2a52', '#080c18']} />
+    <Stars radius={100} depth={50} count={4000} factor={5} saturation={0.2} fade speed={1} />
+    <Snowfall />
   </>
 );

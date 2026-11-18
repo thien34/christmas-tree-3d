@@ -13,8 +13,8 @@ export const SceneLighting = () => (
       <Environment files={ENVIRONMENT_MAP} background={false} />
     </Suspense>
 
-    <ambientLight intensity={0.5} color="#003311" />
-    <ambientLight intensity={0.3} color="#666688" />
+    {/* Ánh trăng xanh nhạt phủ đều, để vật không đen kịt ở mặt khuất và trong lúc bản đồ môi trường chưa tải xong */}
+    <ambientLight intensity={1.2} color="#8fa3d9" />
     <spotLight position={[10, 20, 10]} angle={0.3} penumbra={1} intensity={2} color="#fffaed" />
     <pointLight position={[30, 30, 30]} intensity={100} color={CONFIG.colors.warmLight} />
     <pointLight position={[-30, 10, -30]} intensity={50} color={CONFIG.colors.gold} />

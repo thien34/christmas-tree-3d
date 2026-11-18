@@ -105,8 +105,8 @@ src/
 │   │   └── shared/         # Chuyển động tán loạn ↔ thành cây dùng chung
 │   ├── UI/                 # Nút Photos, Debug, dòng trạng thái
 │   └── GestureController.tsx
-├── gesture/                # Camera + MediaPipe → các sự kiện cử chỉ
-├── hooks/                  # Trạng thái của app (theme, kiểu cây, ảnh, zoom...)
+├── gesture/                # Camera + MediaPipe → cập nhật store theo cử chỉ
+├── store.ts                # Trạng thái dùng chung của app (zustand): theme, kiểu cây, ảnh, zoom...
 ├── constants/              # Cấu hình và bảng màu
 ├── shaders/                # Shader GLSL cho hạt lá
 └── utils/                  # Hàm ngẫu nhiên, tính vị trí trên cây

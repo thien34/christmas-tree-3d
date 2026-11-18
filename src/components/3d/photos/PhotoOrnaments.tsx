@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 import { CONFIG } from '../../../constants/config';
-import type { SceneState, ZoomState } from '../../../types';
+import { useStore } from '../../../store';
 import { randomEuler, randomItem, randomRange, randomRotationSpeed } from '../../../utils/random';
 import { jitterXZ, sampleOrnamentPoint, sampleShellPoint } from '../../../utils/treePositions';
 import { damping } from '../shared/motion';
@@ -65,14 +65,9 @@ const placeInFrontOfCamera = (frame: THREE.Group, photo: Photo, camera: THREE.Ca
   frame.quaternion.copy(parentQuaternion.invert().multiply(cameraQuaternion));
 };
 
-interface PhotoOrnamentsProps {
-  state: SceneState;
-  photoUrls: string[];
-  zoomState: ZoomState;
-}
-
 /** Ảnh người dùng thêm vào, treo trên cây như ảnh Polaroid; chụm tay để phóng to ảnh gần tay nhất. */
-export const PhotoOrnaments = ({ state, photoUrls, zoomState }: PhotoOrnamentsProps) => {
+export const PhotoOrnaments = () => {
+  const photoUrls = useStore((s) => s.photoUrls);
   const textures = useTexture(photoUrls);
   const photos = useMemo(() => createPhotos(textures.length), [textures]);
   const frameRefs = useRef<(THREE.Group | null)[]>([]);
@@ -82,11 +77,12 @@ export const PhotoOrnaments = ({ state, photoUrls, zoomState }: PhotoOrnamentsPr
   useFrame(({ clock, camera }, delta) => {
     const frames = frameRefs.current.slice(0, photos.length).filter((frame) => frame !== null);
     if (frames.length !== photos.length) return;
+    const { sceneState: state, pinch } = useStore.getState();
 
-    if (!zoomState.active) {
+    if (!pinch) {
       zoomedIndexRef.current = -1;
-    } else if (zoomedIndexRef.current < 0 && zoomState.handPosition) {
-      zoomedIndexRef.current = pickNearestOnScreen(frames, camera, zoomState.handPosition);
+    } else if (zoomedIndexRef.current < 0) {
+      zoomedIndexRef.current = pickNearestOnScreen(frames, camera, pinch);
     }
 
     photos.forEach((photo, i) => {

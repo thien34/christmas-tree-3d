@@ -1,5 +1,6 @@
 import { useLayoutEffect } from 'react';
 import * as THREE from 'three';
+import { useStore } from '../../../store';
 import type { SceneState, TreeStyle } from '../../../types';
 
 /** Một phần tử chuyển động qua lại giữa vị trí tán loạn (CHAOS) và vị trí trên cây (FORMED). */
@@ -43,7 +44,8 @@ export type TreeTargetSampler = (style: TreeStyle, index: number, count: number,
  * Tính lại vị trí trên cây của từng phần tử mỗi khi đổi kiểu cây (cập nhật tại chỗ, không re-render).
  * `sample` phải là hàm ổn định (khai báo ngoài component), nếu không vị trí sẽ bị tính lại mỗi lần render.
  */
-export const useTreeTargets = (items: readonly MorphingItem[], treeStyle: TreeStyle, sample: TreeTargetSampler) => {
+export const useTreeTargets = (items: readonly MorphingItem[], sample: TreeTargetSampler) => {
+  const treeStyle = useStore((s) => s.treeStyle);
   useLayoutEffect(() => {
     items.forEach((item, i) => sample(treeStyle, i, items.length, item.targetPos));
   }, [items, treeStyle, sample]);

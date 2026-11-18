@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
-import type { SceneState, ThemeColors, TreeStyle } from '../../types';
+import { useStore, useThemeColors } from '../../store';
 import { randomRange } from '../../utils/random';
 import { sampleLightPoint, sampleShellPoint } from '../../utils/treePositions';
 import { createMorphingItems, moveTowardsState, useTreeTargets } from './shared/motion';
@@ -31,35 +31,29 @@ const createLights = (count: number) =>
 const matrix = new THREE.Matrix4();
 const color = new THREE.Color();
 
-interface FairyLightsProps {
-  state: SceneState;
-  themeColors: ThemeColors;
-  treeStyle: TreeStyle;
-}
-
-export const FairyLights = ({ state, themeColors, treeStyle }: FairyLightsProps) => {
+export const FairyLights = () => {
   const count = CONFIG.counts.lights;
+  const themeColors = useThemeColors();
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
   const lights = useMemo(() => createLights(count), [count]);
-  const geometry = useMemo(() => new THREE.SphereGeometry(BULB_RADIUS, 8, 8), []);
   const baseColors = useMemo(
     () => lights.map((light) => new THREE.Color(pickColor(themeColors.lights, light.colorSeed))),
     [lights, themeColors.lights],
   );
-  useTreeTargets(lights, treeStyle, sampleLightPoint);
+  useTreeTargets(lights, sampleLightPoint);
 
   useFrame(({ clock }, delta) => {
     const mesh = meshRef.current;
     if (!mesh) return;
-    const isFormed = state === 'FORMED';
+    const { sceneState } = useStore.getState();
 
     lights.forEach((light, i) => {
-      moveTowardsState(light, state, MOVE_SPEED, delta);
+      moveTowardsState(light, sceneState, MOVE_SPEED, delta);
       mesh.setMatrixAt(i, matrix.makeTranslation(light.currentPos));
 
       const blink = (Math.sin(clock.elapsedTime * light.blinkSpeed + light.blinkOffset) + 1) / 2;
-      const glow = isFormed ? THREE.MathUtils.lerp(MIN_GLOW, MAX_GLOW, blink) : 1;
+      const glow = sceneState === 'FORMED' ? THREE.MathUtils.lerp(MIN_GLOW, MAX_GLOW, blink) : 1;
       mesh.setColorAt(i, color.copy(baseColors[i]).multiplyScalar(glow));
     });
 
@@ -68,7 +62,8 @@ export const FairyLights = ({ state, themeColors, treeStyle }: FairyLightsProps)
   });
 
   return (
-    <instancedMesh ref={meshRef} args={[geometry, undefined, count]} frustumCulled={false}>
+    <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled={false}>
+      <sphereGeometry args={[BULB_RADIUS, 8, 8]} />
       <meshBasicMaterial toneMapped={false} />
     </instancedMesh>
   );

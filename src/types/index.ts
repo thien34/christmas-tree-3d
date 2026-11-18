@@ -25,9 +25,3 @@ export interface HandPosition {
 }
 
 export type FingerCount = 1 | 2 | 3;
-
-export interface ZoomState {
-  active: boolean;
-  /** Vị trí tay lúc bắt đầu chụm, dùng để chọn ảnh cần phóng to. */
-  handPosition?: HandPosition;
-}

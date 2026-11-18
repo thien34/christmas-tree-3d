@@ -1,16 +1,12 @@
 import { useRef, type ChangeEvent } from 'react';
+import { addPhotos, useStore } from '../../store';
 
-interface AddPhotoButtonProps {
-  photoCount: number;
-  onPhotosAdded: (files: FileList) => void;
-}
-
-export const AddPhotoButton = ({ photoCount, onPhotosAdded }: AddPhotoButtonProps) => {
+export const AddPhotoButton = () => {
+  const photoCount = useStore((s) => s.photoUrls.length);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { files } = event.target;
-    if (files?.length) onPhotosAdded(files);
+    addPhotos(event.target.files ?? []);
     // Reset để có thể chọn lại đúng file vừa chọn
     event.target.value = '';
   };

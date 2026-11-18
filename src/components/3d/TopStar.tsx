@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
-import type { SceneState } from '../../types';
+import { useStore, useThemeColors } from '../../store';
 
 const SPIN_SPEED = 0.5;
 const GROW_SPEED = 3;
@@ -31,13 +31,9 @@ const createStarGeometry = () =>
     bevelSegments: 3,
   }).center();
 
-interface TopStarProps {
-  state: SceneState;
-  color: string;
-}
-
 /** Ngôi sao trên đỉnh cây: chỉ hiện (phóng to dần) khi cây đã thành hình. */
-export const TopStar = ({ state, color }: TopStarProps) => {
+export const TopStar = () => {
+  const color = useThemeColors().gold;
   const groupRef = useRef<THREE.Group>(null);
   const geometry = useMemo(() => createStarGeometry(), []);
 
@@ -45,7 +41,8 @@ export const TopStar = ({ state, color }: TopStarProps) => {
     const group = groupRef.current;
     if (!group) return;
     group.rotation.y += delta * SPIN_SPEED;
-    group.scale.setScalar(THREE.MathUtils.damp(group.scale.x, state === 'FORMED' ? 1 : 0, GROW_SPEED, delta));
+    const targetScale = useStore.getState().sceneState === 'FORMED' ? 1 : 0;
+    group.scale.setScalar(THREE.MathUtils.damp(group.scale.x, targetScale, GROW_SPEED, delta));
   });
 
   return (

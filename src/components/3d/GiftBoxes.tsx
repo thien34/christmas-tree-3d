@@ -3,8 +3,15 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
-import type { SceneState, ThemeColors, TreeStyle } from '../../types';
-import { randomAngle, randomEuler, randomInCube, randomItem, randomRange, randomRotationSpeed } from '../../utils/random';
+import { useStore, useThemeColors } from '../../store';
+import {
+  randomAngle,
+  randomEuler,
+  randomInCube,
+  randomItem,
+  randomRange,
+  randomRotationSpeed,
+} from '../../utils/random';
 import { sampleOrnamentPoint } from '../../utils/treePositions';
 import { createMorphingItems, moveTowardsState, spin, useTreeTargets, type TreeTargetSampler } from './shared/motion';
 
@@ -23,6 +30,8 @@ const SIZE_RANGES: [number, number][] = [
 ];
 
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
+/** Khối hộp 1×1×1 dùng chung cho hộp quà và mọi mảnh ruy băng (kích thước nằm trong ma trận từng instance). */
+const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 
 /** Ma trận cục bộ của một mảnh (so với tâm hộp quà). */
 const partMatrix = (position: [number, number, number], rotationZ: number, scale: [number, number, number]) =>
@@ -67,20 +76,14 @@ const quaternion = new THREE.Quaternion();
 const unitScale = new THREE.Vector3(1, 1, 1);
 const color = new THREE.Color();
 
-interface GiftBoxesProps {
-  state: SceneState;
-  themeColors: ThemeColors;
-  treeStyle: TreeStyle;
-}
-
-export const GiftBoxes = ({ state, themeColors, treeStyle }: GiftBoxesProps) => {
+export const GiftBoxes = () => {
   const count = CONFIG.counts.gifts;
+  const themeColors = useThemeColors();
   const boxesRef = useRef<THREE.InstancedMesh>(null);
   const ribbonsRef = useRef<THREE.InstancedMesh>(null);
 
   const gifts = useMemo(() => createGifts(count), [count]);
-  const geometry = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
-  useTreeTargets(gifts, treeStyle, sampleGiftTarget);
+  useTreeTargets(gifts, sampleGiftTarget);
 
   // Tô màu từng hộp theo theme (ruy băng đổi màu qua prop `color` bên dưới)
   useLayoutEffect(() => {
@@ -94,13 +97,14 @@ export const GiftBoxes = ({ state, themeColors, treeStyle }: GiftBoxesProps) => 
     const boxes = boxesRef.current;
     const ribbons = ribbonsRef.current;
     if (!boxes || !ribbons) return;
+    const { sceneState } = useStore.getState();
 
     gifts.forEach((gift, i) => {
-      moveTowardsState(gift, state, MOVE_SPEED, delta);
+      moveTowardsState(gift, sceneState, MOVE_SPEED, delta);
       spin(gift.rotation, gift.rotationSpeed, delta);
 
       position.copy(gift.currentPos);
-      if (state === 'FORMED') {
+      if (sceneState === 'FORMED') {
         position.y += Math.sin(clock.elapsedTime * 2 + gift.floatOffset) * FLOAT_AMPLITUDE;
       }
       giftMatrix.compose(position, quaternion.setFromEuler(gift.rotation), unitScale);
@@ -117,16 +121,10 @@ export const GiftBoxes = ({ state, themeColors, treeStyle }: GiftBoxesProps) => 
 
   return (
     <>
-      <instancedMesh
-        ref={boxesRef}
-        args={[geometry, undefined, count]}
-        frustumCulled={false}>
+      <instancedMesh ref={boxesRef} args={[UNIT_BOX, undefined, count]} frustumCulled={false}>
         <meshStandardMaterial roughness={0.3} metalness={0.1} />
       </instancedMesh>
-      <instancedMesh
-        ref={ribbonsRef}
-        args={[geometry, undefined, count * RIBBON_PARTS_PER_GIFT]}
-        frustumCulled={false}>
+      <instancedMesh ref={ribbonsRef} args={[UNIT_BOX, undefined, count * RIBBON_PARTS_PER_GIFT]} frustumCulled={false}>
         <meshStandardMaterial color={themeColors.gold} roughness={0.15} metalness={1} />
       </instancedMesh>
     </>

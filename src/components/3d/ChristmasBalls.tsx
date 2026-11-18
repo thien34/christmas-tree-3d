@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
-import type { SceneState, ThemeColors, TreeStyle } from '../../types';
+import { useStore, useThemeColors } from '../../store';
 import { randomAngle, randomEuler, randomInCube, randomItem, randomRange, randomRotationSpeed } from '../../utils/random';
 import { sampleOrnamentPoint } from '../../utils/treePositions';
 import { createMorphingItems, moveTowardsState, spin, useTreeTargets, type TreeTargetSampler } from './shared/motion';
@@ -63,15 +63,10 @@ type BallMesh = THREE.Mesh<THREE.BufferGeometry, THREE.MeshStandardMaterial>;
 const sampleBallTarget: TreeTargetSampler = (style, _index, _count, out) =>
   sampleOrnamentPoint(style, out).multiplyScalar(0.95);
 
-interface ChristmasBallsProps {
-  state: SceneState;
-  themeColors: ThemeColors;
-  treeStyle: TreeStyle;
-}
-
 /** Các quả cầu kim loại treo trên cây; khoảng 1/4 số quả thỉnh thoảng lấp lánh ánh vàng. */
-export const ChristmasBalls = ({ state, themeColors, treeStyle }: ChristmasBallsProps) => {
+export const ChristmasBalls = () => {
   const count = CONFIG.counts.ornaments;
+  const themeColors = useThemeColors();
   const meshRefs = useRef<(BallMesh | null)[]>([]);
 
   const balls = useMemo(() => createBalls(count), [count]);
@@ -81,7 +76,7 @@ export const ChristmasBalls = ({ state, themeColors, treeStyle }: ChristmasBalls
     () => balls.map((ball) => new THREE.Color(pickColor(themeColors.ornamentColors, ball.colorSeed))),
     [balls, themeColors.ornamentColors],
   );
-  useTreeTargets(balls, treeStyle, sampleBallTarget);
+  useTreeTargets(balls, sampleBallTarget);
 
   // Đổi màu theo theme
   useLayoutEffect(() => {
@@ -93,6 +88,7 @@ export const ChristmasBalls = ({ state, themeColors, treeStyle }: ChristmasBalls
 
   useFrame(({ clock }, delta) => {
     const time = clock.elapsedTime;
+    const state = useStore.getState().sceneState;
 
     balls.forEach((ball, i) => {
       const mesh = meshRefs.current[i];

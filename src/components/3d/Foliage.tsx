@@ -5,7 +5,8 @@ import { inSphere } from 'maath/random';
 import { CONFIG } from '../../constants/config';
 import '../../shaders/FoliageMaterial'; // đăng ký thẻ <foliageMaterial />
 import type { FoliageMaterialImpl } from '../../shaders/FoliageMaterial';
-import type { SceneState, ThemeColors, TreeStyle } from '../../types';
+import { useStore, useThemeColors } from '../../store';
+import type { TreeStyle } from '../../types';
 import { sampleFoliagePoint } from '../../utils/treePositions';
 import { damping } from './shared/motion';
 
@@ -36,14 +37,10 @@ const fillTreeTargets = (attribute: THREE.BufferAttribute, style: TreeStyle) => 
   attribute.needsUpdate = true;
 };
 
-interface FoliageProps {
-  state: SceneState;
-  themeColors: ThemeColors;
-  treeStyle: TreeStyle;
-}
-
 /** 25.000 hạt lá cây vẽ bằng một Points; toàn bộ chuyển động chạy trên GPU (xem FoliageMaterial). */
-export const Foliage = ({ state, themeColors, treeStyle }: FoliageProps) => {
+export const Foliage = () => {
+  const treeStyle = useStore((s) => s.treeStyle);
+  const themeColors = useThemeColors();
   const materialRef = useRef<FoliageMaterialImpl>(null);
   const geometry = useMemo(() => createFoliageGeometry(CONFIG.counts.foliage), []);
   const targetColor = useMemo(() => new THREE.Color(themeColors.primary), [themeColors.primary]);
@@ -55,6 +52,7 @@ export const Foliage = ({ state, themeColors, treeStyle }: FoliageProps) => {
   useFrame(({ clock }, delta) => {
     const material = materialRef.current;
     if (!material) return;
+    const state = useStore.getState().sceneState;
     material.uTime = clock.elapsedTime;
     material.uProgress = THREE.MathUtils.damp(material.uProgress, state === 'FORMED' ? 1 : 0, MORPH_SPEED, delta);
     material.uColor.lerp(targetColor, damping(COLOR_SPEED, delta));

@@ -1,10 +1,17 @@
+import { Suspense } from 'react';
 import { Environment } from '@react-three/drei';
 import { CONFIG } from '../../../constants/config';
+
+/** Ảnh toàn cảnh (preset "city" của drei) nằm sẵn trong `public/`, không phụ thuộc CDN. */
+const ENVIRONMENT_MAP = `${import.meta.env.BASE_URL}hdri/potsdamer_platz_1k.hdr`;
 
 /** Đèn chiếu sáng cảnh + bản đồ môi trường cho phản chiếu kim loại. */
 export const SceneLighting = () => (
   <>
-    <Environment preset="city" background={false} />
+    {/* Suspense riêng: trong lúc bản đồ môi trường đang tải, phần còn lại của cảnh vẫn hiện bình thường */}
+    <Suspense fallback={null}>
+      <Environment files={ENVIRONMENT_MAP} background={false} />
+    </Suspense>
 
     <ambientLight intensity={0.5} color="#003311" />
     <ambientLight intensity={0.3} color="#666688" />

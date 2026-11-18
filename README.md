@@ -30,7 +30,7 @@ Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử c
 
 6. Mở trình duyệt (nên dùng Chrome hoặc Edge) vào **http://localhost:5173** và bấm **Cho phép** khi được hỏi quyền camera.
 
-Lần đầu mở trang cần Internet để tải model nhận diện tay và ảnh môi trường, nên màn hình có thể đen vài giây.
+Lần đầu mở trang cần Internet để tải model nhận diện tay, nên màn hình có thể đen vài giây.
 
 ## Cách dùng
 

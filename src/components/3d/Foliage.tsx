@@ -13,48 +13,64 @@ import { damping } from './shared/motion';
 const CHAOS_RADIUS = 30;
 /** Tốc độ chuyển giữa CHAOS và FORMED (càng lớn càng nhanh). */
 const MORPH_SPEED = 1.5;
+/** Tốc độ chuyển giữa hai kiểu cây. */
+const STYLE_SPEED = 3;
 const COLOR_SPEED = 2;
 
-/** Tạo geometry cho các hạt lá: vị trí tán loạn, vị trí trên cây (điền sau) và một số ngẫu nhiên cho kích thước. */
+const vec3Attribute = (values: THREE.TypedArray) => new THREE.BufferAttribute(values, 3);
+
+/** Geometry cho các hạt lá: vị trí tán loạn, vị trí trên cây (cũ + mới, điền sau) và một số ngẫu nhiên cho kích thước. */
 const createFoliageGeometry = (count: number) => {
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute(
-    'position',
-    new THREE.BufferAttribute(inSphere(new Float32Array(count * 3), { radius: CHAOS_RADIUS }), 3),
-  );
-  geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(new Float32Array(count * 3), 3));
+  geometry.setAttribute('position', vec3Attribute(inSphere(new Float32Array(count * 3), { radius: CHAOS_RADIUS })));
+  geometry.setAttribute('aTargetPos', vec3Attribute(new Float32Array(count * 3)));
+  geometry.setAttribute('aPrevTargetPos', vec3Attribute(new Float32Array(count * 3)));
   geometry.setAttribute('aRandom', new THREE.BufferAttribute(Float32Array.from({ length: count }, Math.random), 1));
   return geometry;
 };
 
-/** Ghi lại vị trí trên cây của mọi hạt theo kiểu cây. */
-const fillTreeTargets = (attribute: THREE.BufferAttribute, style: TreeStyle) => {
-  const point = new THREE.Vector3();
-  for (let i = 0; i < attribute.count; i++) {
-    sampleFoliagePoint(style, point);
-    attribute.setXYZ(i, point.x, point.y, point.z);
+/**
+ * Đặt lại vị trí trên cây của mọi hạt theo kiểu cây mới. Vị trí hiện tại của từng hạt (đang ở `styleMix`
+ * trên đường từ vị trí cũ sang vị trí mới) được giữ làm điểm xuất phát, nên đổi kiểu giữa chừng không bị giật.
+ */
+const retargetFoliage = (geometry: THREE.BufferGeometry, style: TreeStyle, styleMix: number) => {
+  const prev = geometry.getAttribute('aPrevTargetPos') as THREE.BufferAttribute;
+  const target = geometry.getAttribute('aTargetPos') as THREE.BufferAttribute;
+  const from = new THREE.Vector3();
+  const to = new THREE.Vector3();
+
+  for (let i = 0; i < target.count; i++) {
+    from.fromBufferAttribute(prev, i).lerp(to.fromBufferAttribute(target, i), styleMix);
+    prev.setXYZ(i, from.x, from.y, from.z);
+    sampleFoliagePoint(style, to);
+    target.setXYZ(i, to.x, to.y, to.z);
   }
-  attribute.needsUpdate = true;
+  prev.needsUpdate = true;
+  target.needsUpdate = true;
 };
 
 /** 25.000 hạt lá cây vẽ bằng một Points; toàn bộ chuyển động chạy trên GPU (xem FoliageMaterial). */
 export const Foliage = () => {
   const treeStyle = useStore((s) => s.treeStyle);
-  const themeColors = useThemeColors();
+  const { primary } = useThemeColors();
   const materialRef = useRef<FoliageMaterialImpl>(null);
   const geometry = useMemo(() => createFoliageGeometry(CONFIG.counts.foliage), []);
-  const targetColor = useMemo(() => new THREE.Color(themeColors.primary), [themeColors.primary]);
+  const targetColor = useMemo(() => new THREE.Color(primary), [primary]);
 
   useLayoutEffect(() => {
-    fillTreeTargets(geometry.getAttribute('aTargetPos') as THREE.BufferAttribute, treeStyle);
+    const material = materialRef.current;
+    if (!material) return;
+    retargetFoliage(geometry, treeStyle, material.uStyleMix);
+    material.uStyleMix = 0;
   }, [geometry, treeStyle]);
 
   useFrame(({ clock }, delta) => {
     const material = materialRef.current;
     if (!material) return;
-    const state = useStore.getState().sceneState;
+    const isFormed = useStore.getState().sceneState === 'FORMED';
     material.uTime = clock.elapsedTime;
-    material.uProgress = THREE.MathUtils.damp(material.uProgress, state === 'FORMED' ? 1 : 0, MORPH_SPEED, delta);
+    material.uProgress = THREE.MathUtils.damp(material.uProgress, isFormed ? 1 : 0, MORPH_SPEED, delta);
+    material.uStyleMix = THREE.MathUtils.damp(material.uStyleMix, 1, STYLE_SPEED, delta);
     material.uColor.lerp(targetColor, damping(COLOR_SPEED, delta));
   });
 

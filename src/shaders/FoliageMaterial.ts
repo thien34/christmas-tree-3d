@@ -8,20 +8,24 @@ import { THEMES } from '../constants/themes';
  * Material cho các hạt lá cây.
  * - `position`: vị trí tán loạn (CHAOS), `aTargetPos`: vị trí trên cây (FORMED).
  * - `uProgress` 0 → 1 nội suy giữa hai vị trí (có easing), kèm dao động nhẹ theo `uTime`.
+ * - Khi đổi kiểu cây: `uStyleMix` 0 → 1 đưa hạt từ vị trí cũ `aPrevTargetPos` sang `aTargetPos`.
  * - Màu chuyển dần từ tối ở gốc lên sáng ở ngọn.
  */
 export const FoliageMaterial = shaderMaterial(
   {
     uTime: 0,
     uProgress: 0,
+    uStyleMix: 1,
     uColor: new THREE.Color(THEMES.christmas.primary),
     uTreeHeight: CONFIG.tree.height,
   },
   /* glsl */ `
     uniform float uTime;
     uniform float uProgress;
+    uniform float uStyleMix;
     uniform float uTreeHeight;
     attribute vec3 aTargetPos;
+    attribute vec3 aPrevTargetPos;
     attribute float aRandom;
     varying float vMix;
     varying float vHeight;
@@ -38,7 +42,8 @@ export const FoliageMaterial = shaderMaterial(
       ) * 0.15;
 
       float t = cubicInOut(uProgress);
-      vec3 finalPos = mix(position, aTargetPos + wobble, t);
+      vec3 treePos = mix(aPrevTargetPos, aTargetPos, uStyleMix);
+      vec3 finalPos = mix(position, treePos + wobble, t);
 
       // Chiều cao chuẩn hoá: 0 = gốc, 1 = ngọn
       vHeight = clamp(finalPos.y / uTreeHeight + 0.5, 0.0, 1.0);

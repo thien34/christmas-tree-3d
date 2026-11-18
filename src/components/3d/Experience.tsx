@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Selection } from '@react-three/postprocessing';
 import type * as THREE from 'three';
 import { useStore } from '../../store';
 import { ChristmasBalls } from './ChristmasBalls';
@@ -26,7 +27,8 @@ export const Experience = () => {
   });
 
   return (
-    <>
+    // Selection: gom các vật bọc trong <Select> (ảnh Polaroid) để PostEffects loại chúng khỏi bloom
+    <Selection>
       <CameraRig />
       <SceneLighting />
       <Atmosphere />
@@ -41,6 +43,6 @@ export const Experience = () => {
       </group>
 
       <PostEffects />
-    </>
+    </Selection>
   );
 };

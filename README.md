@@ -54,7 +54,7 @@ Lần đầu mở trang cần Internet để tải model nhận diện tay, nên
 | ☝️ 1 ngón | Cây hình nón cổ điển |
 | ✌️ 2 ngón | Cây nhiều tầng |
 | 3 ngón (trỏ, giữa, áp út) | Cây xoắn ốc |
-| 🤏 Chụm ngón cái và ngón trỏ | Phóng to tấm ảnh gần tay nhất; thả tay để ảnh về chỗ cũ |
+| 🤏 Chụm ngón cái và ngón trỏ | Phóng to một tấm ảnh; thả tay để ảnh về chỗ cũ. Mỗi lần chụm lại ra một tấm khác |
 
 ## Gặp lỗi?
 

@@ -1,33 +1,41 @@
 import type { ThemeColors, ThemeType } from '../types';
 
+/*
+ * Mỗi theme: lá một tông chủ đạo; đồ trang trí gồm một màu đậm cùng tông, một màu kim loại và một màu sáng
+ * trung tính; đèn ấm hoặc lạnh theo tông đó. Tránh để màu quả cầu trùng màu lá (sẽ chìm vào tán cây).
+ */
 export const THEMES: Record<ThemeType, ThemeColors> = {
+  // Xanh thông, đỏ rượu, vàng đồng, trắng ngà
   christmas: {
-    primary: '#004225',
-    gold: '#FFD700',
-    lights: ['#FF0000', '#00FF00', '#FFFF00'],
-    ornamentColors: ['#D32F2F', '#FFD700', '#2E7D32'],
-    giftColors: ['#C41E3A', '#228B22', '#FFD700', '#FF69B4', '#C0C0C0'],
+    primary: '#1F7A3F',
+    gold: '#F2C14E',
+    lights: ['#FFE2A6', '#FF6B5A', '#FFC857'],
+    ornamentColors: ['#B3202A', '#E3B23C', '#F4EAD5'],
+    giftColors: ['#B3202A', '#1E6B3A', '#F4EAD5', '#D9A441'],
   },
+  // Hồng phấn, vàng hồng, đỏ mận
   pink: {
-    primary: '#FF69B4',
-    gold: '#FFC0CB',
-    lights: ['#FF69B4', '#FFB6C1', '#FF1493', '#FFC0CB'],
-    ornamentColors: ['#FF69B4', '#FFB6C1', '#FF1493'],
-    giftColors: ['#FF69B4', '#FFB6C1', '#FF1493', '#DB7093', '#FFC0CB'],
+    primary: '#C9577E',
+    gold: '#F3C2A2',
+    lights: ['#FFE8DA', '#FFB5C8', '#FFD9A8'],
+    ornamentColors: ['#8E2847', '#EDB79B', '#FFF1E8'],
+    giftColors: ['#8E2847', '#F2B8C6', '#FFF1E8', '#E3A587'],
   },
+  // Tím thạch anh, vàng sâm panh, bạc
   purple: {
-    primary: '#6B21A8',
-    gold: '#DDA0DD',
-    lights: ['#8B5CF6', '#A855F7', '#C084FC', '#E9D5FF'],
-    ornamentColors: ['#6B21A8', '#8B5CF6', '#A855F7'],
-    giftColors: ['#6B21A8', '#8B5CF6', '#A855F7', '#9333EA', '#C084FC'],
+    primary: '#6A45B5',
+    gold: '#EBD197',
+    lights: ['#FFF0D2', '#D9C4FF', '#F0A6E8'],
+    ornamentColors: ['#3F1D6B', '#E2C46F', '#E6E4F2'],
+    giftColors: ['#3F1D6B', '#B49CEB', '#E6E4F2', '#D9B85C'],
   },
+  // Xanh băng, bạc, xanh hải quân
   blue: {
-    primary: '#0284C7',
-    gold: '#67E8F9',
-    lights: ['#0EA5E9', '#38BDF8', '#7DD3FC', '#BAE6FD'],
-    ornamentColors: ['#0284C7', '#0EA5E9', '#38BDF8'],
-    giftColors: ['#0284C7', '#0EA5E9', '#38BDF8', '#0369A1', '#7DD3FC'],
+    primary: '#2F84B8',
+    gold: '#E4F2FF',
+    lights: ['#F0F8FF', '#8FDBFF', '#5FA9FF'],
+    ornamentColors: ['#1D3F7A', '#DCE6F0', '#F6FBFF'],
+    giftColors: ['#1D3F7A', '#A9D4F2', '#F6FBFF', '#C9D6E3'],
   },
 };
 

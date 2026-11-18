@@ -1,16 +1,10 @@
 import * as THREE from 'three';
 
-/** Số thực ngẫu nhiên trong [min, max). */
-export const randomRange = (min: number, max: number) => min + Math.random() * (max - min);
-
-/** Số thực ngẫu nhiên trong [-spread/2, spread/2). */
-export const randomSpread = (spread: number) => (Math.random() - 0.5) * spread;
-
-/** Số nguyên ngẫu nhiên trong [0, max). */
-export const randomInt = (max: number) => Math.floor(Math.random() * max);
+/** `randomRange(min, max)`: số thực trong [min, max). `randomSpread(spread)`: số thực trong [-spread/2, spread/2). */
+export const { randFloat: randomRange, randFloatSpread: randomSpread } = THREE.MathUtils;
 
 /** Lấy ngẫu nhiên một phần tử của mảng. */
-export const randomItem = <T>(items: readonly T[]): T => items[randomInt(items.length)];
+export const randomItem = <T>(items: readonly T[]): T => items[Math.floor(Math.random() * items.length)];
 
 /** Góc ngẫu nhiên trong [0, 2π). */
 export const randomAngle = () => Math.random() * Math.PI * 2;

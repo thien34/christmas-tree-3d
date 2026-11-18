@@ -1,54 +1,65 @@
-import { Suspense, useRef } from 'react';
+import { memo, Suspense, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Foliage } from './Foliage';
-import { PhotoOrnaments } from './PhotoOrnaments';
-import { ChristmasElements } from './ChristmasElements';
-import { FairyLights } from './FairyLights';
-import { GiftBoxes } from './GiftBoxes';
-import { TopStar } from './TopStar';
-import { ExperienceLights } from './ExperienceLights';
-import type { SceneState, ZoomState, ThemeColors, TreeStyle } from '../../types';
 import * as THREE from 'three';
+import type { SceneState, ThemeColors, TreeStyle, ZoomState } from '../../types';
+import { ChristmasBalls } from './ChristmasBalls';
+import { FairyLights } from './FairyLights';
+import { Foliage } from './Foliage';
+import { GiftBoxes } from './GiftBoxes';
+import { PhotoOrnaments } from './photos/PhotoOrnaments';
+import { Atmosphere } from './scene/Atmosphere';
+import { CameraRig } from './scene/CameraRig';
+import { PostEffects } from './scene/PostEffects';
+import { SceneLighting } from './scene/SceneLighting';
+import { TopStar } from './TopStar';
+
+/** Tốc độ cây tự quay (rad/giây). */
+const TREE_SPIN_SPEED = 0.2;
 
 interface ExperienceProps {
   sceneState: SceneState;
   photoUrls: string[];
-  zoomState?: ZoomState;
+  zoomState: ZoomState;
   themeColors: ThemeColors;
   treeStyle: TreeStyle;
 }
 
-export const Experience = ({ sceneState, photoUrls, zoomState, themeColors, treeStyle }: ExperienceProps) => {
-  const treeGroupRef = useRef<THREE.Group>(null);
+/**
+ * Toàn bộ cảnh 3D. Bọc `memo` để các lần re-render của UI (vd. dòng trạng thái)
+ * không làm render lại hàng trăm mesh bên trong.
+ */
+export const Experience = memo(({ sceneState, photoUrls, zoomState, themeColors, treeStyle }: ExperienceProps) => {
+  const treeRef = useRef<THREE.Group>(null);
 
-  // Quay cây chậm liên tục - dừng khi đang zoom
+  // Cây quay chậm liên tục, dừng lại khi đang phóng to ảnh
   useFrame((_, delta) => {
-    if (treeGroupRef.current && !zoomState?.active) {
-      treeGroupRef.current.rotation.y += delta * 0.2; // Quay chậm (0.2 rad/s)
-    }
+    if (treeRef.current && !zoomState.active) treeRef.current.rotation.y += delta * TREE_SPIN_SPEED;
   });
+
+  const decorationProps = { state: sceneState, themeColors, treeStyle };
 
   return (
     <>
-      <ExperienceLights sceneState={sceneState} zoomState={zoomState} />
+      <CameraRig autoRotate={sceneState === 'FORMED' && !zoomState.active} />
+      <SceneLighting />
+      <Atmosphere />
 
-      <group ref={treeGroupRef} position={[0, -2, 0]}>
-        <Foliage state={sceneState} themeColors={themeColors} treeStyle={treeStyle} />
-        <Suspense fallback={null}>
-          <ChristmasElements state={sceneState} themeColors={themeColors} treeStyle={treeStyle} />
-          <FairyLights state={sceneState} themeColors={themeColors} treeStyle={treeStyle} />
-          <GiftBoxes state={sceneState} themeColors={themeColors} treeStyle={treeStyle} />
-          <TopStar state={sceneState} themeColors={themeColors} />
-          {/* Render ảnh sau cùng để nổi lên trên */}
-          <PhotoOrnaments 
-            key={photoUrls?.length || 0} 
-            state={sceneState} 
-            photoUrls={photoUrls || []}
-            zoomState={zoomState}
-          />
-        </Suspense>
+      <group ref={treeRef} position={[0, -2, 0]}>
+        <Foliage {...decorationProps} />
+        <ChristmasBalls {...decorationProps} />
+        <FairyLights {...decorationProps} />
+        <GiftBoxes {...decorationProps} />
+        <TopStar state={sceneState} color={themeColors.gold} />
+
+        {photoUrls.length > 0 && (
+          // Suspense riêng: lúc đang tải ảnh mới, phần còn lại của cây không bị ẩn đi
+          <Suspense fallback={null}>
+            <PhotoOrnaments state={sceneState} photoUrls={photoUrls} zoomState={zoomState} />
+          </Suspense>
+        )}
       </group>
+
+      <PostEffects />
     </>
   );
-};
-
+});

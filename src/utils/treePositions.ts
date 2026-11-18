@@ -1,222 +1,125 @@
 import * as THREE from 'three';
 import { CONFIG } from '../constants/config';
 import type { TreeStyle } from '../types';
+import { randomAngle, randomRange, randomSpread, randomWeightedIndex } from './random';
 
-/**
- * Tính toán vị trí hình nón của cây thông (Classic style)
+/*
+ * Các hàm lấy mẫu vị trí trên cây thông.
+ * Toạ độ cục bộ: trục Y hướng lên, gốc cây ở y = -height/2, đỉnh ở y = +height/2.
+ * `t` là chiều cao chuẩn hoá: 0 = gốc, 1 = đỉnh.
+ * Mọi hàm ghi kết quả vào `out` và trả về chính `out` để tránh cấp phát trong vòng lặp.
  */
-export const getTreePosition = (): [number, number, number] => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  const y = Math.random() * h - h / 2;
-  const normalizedY = (y + h / 2) / h;
-  const currentRadius = rBase * (1 - normalizedY);
-  const theta = Math.random() * Math.PI * 2;
-  const r = Math.random() * currentRadius;
-  return [r * Math.cos(theta), y, r * Math.sin(theta)];
+
+const { height: HEIGHT, radius: RADIUS } = CONFIG.tree;
+
+const TIER_COUNT = 4;
+/** Tầng dưới có nhiều hạt hơn tầng trên. */
+const TIER_WEIGHTS = [0.35, 0.3, 0.22, 0.13];
+const FOLIAGE_SPIRAL_TURNS = 8;
+const LIGHT_SPIRAL_TURNS = 12;
+
+const heightAt = (t: number) => t * HEIGHT - HEIGHT / 2;
+const coneRadiusAt = (t: number) => RADIUS * (1 - t);
+
+/** Đặt `out` theo toạ độ trụ (bán kính, góc, độ cao). */
+const setCylindrical = (out: THREE.Vector3, radius: number, theta: number, y: number) =>
+  out.set(radius * Math.cos(theta), y, radius * Math.sin(theta));
+
+/* ---------- Lá cây: phân bố trong toàn bộ thể tích ---------- */
+
+const sampleClassicVolume = (out: THREE.Vector3) => {
+  const t = Math.random();
+  return setCylindrical(out, Math.random() * coneRadiusAt(t), randomAngle(), heightAt(t));
 };
 
-/**
- * Tính toán vị trí cho cây nhiều tầng (Tiered style)
- * Gồm nhiều hình nón cụt xếp chồng lên nhau
- */
-export const getTieredTreePosition = (): [number, number, number] => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  const numTiers = 4; // Số tầng
-  
-  // Chọn ngẫu nhiên một tầng (tầng dưới có nhiều hạt hơn)
-  const tierWeights = [0.35, 0.30, 0.22, 0.13]; // Phân bố trọng số
-  let rand = Math.random();
-  let tier = 0;
-  for (let i = 0; i < tierWeights.length; i++) {
-    rand -= tierWeights[i];
-    if (rand <= 0) {
-      tier = i;
-      break;
-    }
-  }
-  
-  // Tính toán chiều cao và bán kính cho mỗi tầng
-  const tierHeight = h / numTiers;
-  const tierBottomY = -h / 2 + tier * tierHeight;
-  
-  // Bán kính tầng (giảm dần từ dưới lên)
-  const tierRadiusBottom = rBase * (1 - tier / numTiers) * 1.1;
-  const tierRadiusTop = rBase * (1 - (tier + 0.8) / numTiers) * 0.7;
-  
-  // Vị trí y trong tầng
-  const y = tierBottomY + Math.random() * tierHeight;
-  const normalizedInTier = (y - tierBottomY) / tierHeight;
-  
-  // Bán kính tại vị trí y (hình nón cụt)
-  const currentRadius = tierRadiusBottom + (tierRadiusTop - tierRadiusBottom) * normalizedInTier;
-  
-  const theta = Math.random() * Math.PI * 2;
-  const r = Math.random() * currentRadius;
-  
-  return [r * Math.cos(theta), y, r * Math.sin(theta)];
+/** Nhiều hình nón cụt xếp chồng. */
+const sampleTieredVolume = (out: THREE.Vector3) => {
+  const tier = randomWeightedIndex(TIER_WEIGHTS);
+  const tierHeight = HEIGHT / TIER_COUNT;
+  const radiusBottom = RADIUS * (1 - tier / TIER_COUNT) * 1.1;
+  const radiusTop = RADIUS * (1 - (tier + 0.8) / TIER_COUNT) * 0.7;
+
+  const tInTier = Math.random();
+  const radius = THREE.MathUtils.lerp(radiusBottom, radiusTop, tInTier);
+  const y = -HEIGHT / 2 + (tier + tInTier) * tierHeight;
+  return setCylindrical(out, Math.random() * radius, randomAngle(), y);
 };
 
-/**
- * Tính toán vị trí cho kiểu xoắn ốc (Spiral style)
- * Hạt phân bố theo đường xoắn ốc quanh cây
- */
-export const getSpiralTreePosition = (): [number, number, number] => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  
-  // Vị trí y ngẫu nhiên với phân bố đều hơn
-  const normalizedY = Math.random();
-  const y = normalizedY * h - h / 2;
-  
-  // Bán kính giảm dần theo chiều cao
-  const baseRadius = rBase * (1 - normalizedY);
-  
-  // Tạo hiệu ứng xoắn ốc - góc phụ thuộc vào chiều cao
-  const spiralTurns = 8; // Số vòng xoắn
-  const baseTheta = normalizedY * spiralTurns * Math.PI * 2;
-  
-  // Thêm nhiễu để tạo độ dày cho nhánh xoắn
-  const thetaVariation = (Math.random() - 0.5) * 1.2; // Độ rộng nhánh
-  const theta = baseTheta + thetaVariation;
-  
-  // Bán kính với một chút nhiễu
-  const r = baseRadius * (0.7 + Math.random() * 0.3);
-  
-  return [r * Math.cos(theta), y, r * Math.sin(theta)];
+/** Các nhánh xoắn ốc quanh thân cây. */
+const sampleSpiralVolume = (out: THREE.Vector3) => {
+  const t = Math.random();
+  const theta = t * FOLIAGE_SPIRAL_TURNS * Math.PI * 2 + randomSpread(1.2);
+  const radius = coneRadiusAt(t) * randomRange(0.7, 1);
+  return setCylindrical(out, radius, theta, heightAt(t));
 };
 
-/**
- * Lấy vị trí dựa trên kiểu cây
- */
-export const getTreePositionByStyle = (style: TreeStyle): [number, number, number] => {
+/** Vị trí một hạt lá theo kiểu cây. */
+export const sampleFoliagePoint = (style: TreeStyle, out: THREE.Vector3) => {
   switch (style) {
     case 'tiered':
-      return getTieredTreePosition();
+      return sampleTieredVolume(out);
     case 'spiral':
-      return getSpiralTreePosition();
+      return sampleSpiralVolume(out);
     case 'classic':
-    default:
-      return getTreePosition();
+      return sampleClassicVolume(out);
   }
 };
 
-/**
- * Tính toán vị trí trên hình cầu (cho trạng thái CHAOS)
- * Phân bố đều trên bề mặt hình cầu
- */
-export const getSphericalPosition = (radius: number): THREE.Vector3 => {
-  const u = Math.random();
-  const v = Math.random();
-  const theta = 2 * Math.PI * u; // Góc phương vị (0 đến 2π)
-  const phi = Math.acos(2 * v - 1); // Góc cực (0 đến π) - phân bố đều
-  const r = radius * (0.7 + Math.random() * 0.3); // Bán kính ngẫu nhiên trong khoảng
-  
-  return new THREE.Vector3(
-    r * Math.sin(phi) * Math.cos(theta),
-    r * Math.cos(phi), // Trục Y
-    r * Math.sin(phi) * Math.sin(theta)
-  );
-};
+/* ---------- Đồ trang trí: nằm trên bề mặt cây ---------- */
 
 /**
- * Tính toán vị trí target trên cây với phân bố trọng số
- * Nhiều phần tử ở gốc và thân, ít phần tử ở đỉnh
+ * Vị trí một món trang trí. Kiểu classic đặt trên bề mặt nón, dày ở gốc và thưa dần lên đỉnh;
+ * `excludeTop` (0–1) bỏ bớt phần chóp. Các kiểu khác dùng chung phân bố với lá cây.
  */
-export const getWeightedTreePosition = (
-  excludeTopPercent: number = 0,
-  style: TreeStyle = 'classic'
-): THREE.Vector3 => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  
-  if (style === 'tiered') {
-    const [x, y, z] = getTieredTreePosition();
-    return new THREE.Vector3(x, y, z);
+export const sampleOrnamentPoint = (style: TreeStyle, out: THREE.Vector3, excludeTop = 0) => {
+  if (style !== 'classic') return sampleFoliagePoint(style, out);
+
+  const t = Math.pow(Math.random(), 1.8) * (1 - excludeTop);
+  return setCylindrical(out, coneRadiusAt(t), randomAngle(), heightAt(t));
+};
+
+/* ---------- Đèn: xếp theo thứ tự index ---------- */
+
+/** Dây đèn quấn xoắn ốc, phân bố đều theo chiều cao. */
+const sampleSpiralLight = (index: number, count: number, out: THREE.Vector3) => {
+  const t = index / count;
+  return setCylindrical(out, coneRadiusAt(t) * 0.95, t * LIGHT_SPIRAL_TURNS * Math.PI * 2, heightAt(t));
+};
+
+/** Mỗi tầng một vòng đèn quanh mép ngoài. */
+const sampleTieredLight = (index: number, count: number, out: THREE.Vector3) => {
+  const lightsPerTier = Math.max(1, Math.floor(count / TIER_COUNT));
+  const tier = Math.min(Math.floor(index / lightsPerTier), TIER_COUNT - 1);
+  const tierHeight = HEIGHT / TIER_COUNT;
+
+  const theta = ((index % lightsPerTier) / lightsPerTier) * Math.PI * 2;
+  const radius = RADIUS * (1 - tier / TIER_COUNT) * 1.05 + randomSpread(0.5);
+  const y = -HEIGHT / 2 + (tier + 0.6) * tierHeight + randomSpread(tierHeight * 0.4);
+  return setCylindrical(out, radius, theta, y);
+};
+
+/** Vị trí bóng đèn thứ `index` trong tổng số `count` bóng. */
+export const sampleLightPoint = (style: TreeStyle, index: number, count: number, out: THREE.Vector3) => {
+  switch (style) {
+    case 'spiral':
+      return sampleSpiralLight(index, count, out);
+    case 'tiered':
+      return sampleTieredLight(index, count, out);
+    case 'classic':
+      return jitterXZ(sampleOrnamentPoint('classic', out), 0.3);
   }
-  
-  if (style === 'spiral') {
-    const [x, y, z] = getSpiralTreePosition();
-    return new THREE.Vector3(x, y, z);
-  }
-  
-  // Classic style
-  const maxHeight = 1 - excludeTopPercent;
-  const normalizedY = Math.pow(Math.random(), 1.8) * maxHeight;
-  const y = normalizedY * h - h / 2;
-  
-  const currentRadius = rBase * (1 - (y + h / 2) / h);
-  const theta = Math.random() * Math.PI * 2;
-  
-  return new THREE.Vector3(
-    currentRadius * Math.cos(theta),
-    y,
-    currentRadius * Math.sin(theta)
-  );
 };
 
-/**
- * Tính toán vị trí đèn LED dạng dây quấn xoắn ốc
- */
-export const getSpiralLightPosition = (
-  index: number, 
-  totalCount: number
-): THREE.Vector3 => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  const spiralTurns = 12; // Số vòng quấn
-  
-  // Phân bố đều theo chiều cao
-  const normalizedY = index / totalCount;
-  const y = normalizedY * h - h / 2;
-  
-  // Bán kính giảm dần theo chiều cao
-  const currentRadius = rBase * (1 - normalizedY) * 0.95;
-  
-  // Góc xoắn ốc
-  const theta = normalizedY * spiralTurns * Math.PI * 2;
-  
-  return new THREE.Vector3(
-    currentRadius * Math.cos(theta),
-    y,
-    currentRadius * Math.sin(theta)
-  );
-};
+/* ---------- Trạng thái CHAOS ---------- */
 
-/**
- * Tính toán vị trí đèn cho cây nhiều tầng
- */
-export const getTieredLightPosition = (
-  index: number, 
-  totalCount: number
-): THREE.Vector3 => {
-  const h = CONFIG.tree.height;
-  const rBase = CONFIG.tree.radius;
-  const numTiers = 4;
-  
-  // Phân bố đèn cho mỗi tầng
-  const lightsPerTier = Math.floor(totalCount / numTiers);
-  const tier = Math.floor(index / lightsPerTier);
-  const indexInTier = index % lightsPerTier;
-  
-  const tierHeight = h / numTiers;
-  const tierCenterY = -h / 2 + tier * tierHeight + tierHeight * 0.6;
-  
-  // Bán kính mép ngoài của tầng
-  const tierRadius = rBase * (1 - tier / numTiers) * 1.05;
-  
-  // Góc quanh tầng
-  const theta = (indexInTier / lightsPerTier) * Math.PI * 2;
-  
-  // Thêm một chút nhiễu
-  const yOffset = (Math.random() - 0.5) * tierHeight * 0.4;
-  const rOffset = (Math.random() - 0.5) * 0.5;
-  
-  return new THREE.Vector3(
-    (tierRadius + rOffset) * Math.cos(theta),
-    tierCenterY + yOffset,
-    (tierRadius + rOffset) * Math.sin(theta)
-  );
-};
+/** Điểm ngẫu nhiên trong lớp vỏ cầu có bán kính từ 0.7·radius đến radius, phân bố đều theo hướng. */
+export const sampleShellPoint = (radius: number, out = new THREE.Vector3()) =>
+  out.randomDirection().multiplyScalar(radius * randomRange(0.7, 1));
 
+/** Dịch ngẫu nhiên trên mặt phẳng XZ trong bán kính `amount`. */
+export const jitterXZ = (out: THREE.Vector3, amount: number) => {
+  const angle = randomAngle();
+  out.x += amount * Math.cos(angle);
+  out.z += amount * Math.sin(angle);
+  return out;
+};

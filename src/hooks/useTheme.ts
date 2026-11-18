@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { THEME_ORDER, THEMES } from '../constants/config';
+import { THEME_ORDER, THEMES } from '../constants/themes';
 import type { ThemeType } from '../types';
 
 export const useTheme = () => {

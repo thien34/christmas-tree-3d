@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Canvas } from '@react-three/fiber';
-import * as THREE from 'three';
-import { Experience } from './components/3d';
+import { Experience } from './components/3d/Experience';
 import { GestureController } from './components/GestureController';
 import { AddPhotoButton, DebugButton, StatusText } from './components/UI';
 import { useDebugMode, usePhotos, useSceneState, useTheme, useTreeStyle, useZoomState } from './hooks';
@@ -24,11 +23,15 @@ export default function App() {
     <div className="app">
       {/* Nhấp đúp để chuyển qua lại giữa tán loạn và thành cây */}
       <div className="scene" onDoubleClick={toggleSceneState}>
-        <Canvas
-          dpr={[1, 2]}
-          gl={{ toneMapping: THREE.ReinhardToneMapping }}
-          shadows="percentage">
-          <Experience sceneState={sceneState} photoUrls={photos} zoomState={zoomState} themeColors={themeColors} treeStyle={treeStyle} />
+        {/* "percentage" = PCFShadowMap; three r187 đã bỏ PCFSoftShadowMap (mặc định cũ của R3F) */}
+        <Canvas dpr={[1, 2]} shadows="percentage">
+          <Experience
+            sceneState={sceneState}
+            photoUrls={photos}
+            zoomState={zoomState}
+            themeColors={themeColors}
+            treeStyle={treeStyle}
+          />
         </Canvas>
       </div>
 

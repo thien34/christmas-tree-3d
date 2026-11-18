@@ -1,15 +1,35 @@
-// @ts-nocheck
-import { useRef, useMemo, useEffect } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
-import { 
-  getSphericalPosition, 
-  getWeightedTreePosition, 
-  getSpiralLightPosition,
-  getTieredLightPosition 
-} from '../../utils/treePositions';
-import type { SceneState, FairyLightData, ThemeColors, TreeStyle } from '../../types';
+import { pickColor } from '../../constants/themes';
+import type { SceneState, ThemeColors, TreeStyle } from '../../types';
+import { randomRange } from '../../utils/random';
+import { sampleLightPoint, sampleShellPoint } from '../../utils/treePositions';
+import { createMorphingItems, moveTowardsState, useTreeTargets } from './shared/motion';
+
+/*
+ * 400 bóng đèn vẽ bằng một InstancedMesh (1 draw call).
+ * Độ sáng được nhân thẳng vào màu từng instance; toneMapped={false} cho phép màu > 1 để Bloom bắt sáng.
+ */
+
+const BULB_RADIUS = 0.12;
+const MOVE_SPEED = 2;
+/** Khi đã thành cây, đèn nhấp nháy với độ sáng trong khoảng này. */
+const MIN_GLOW = 3;
+const MAX_GLOW = 7;
+
+const createLights = (count: number) =>
+  createMorphingItems(count, () => ({
+    chaosPos: sampleShellPoint(40),
+    blinkSpeed: randomRange(2, 5),
+    blinkOffset: Math.random() * 100,
+    colorSeed: Math.random(),
+  }));
+
+// Biến tạm dùng lại mỗi khung hình
+const matrix = new THREE.Matrix4();
+const color = new THREE.Color();
 
 interface FairyLightsProps {
   state: SceneState;
@@ -17,123 +37,39 @@ interface FairyLightsProps {
   treeStyle: TreeStyle;
 }
 
-// Helper function to generate target position based on style
-const getTargetPosition = (index: number, count: number, style: TreeStyle): THREE.Vector3 => {
-  switch (style) {
-    case 'spiral':
-      return getSpiralLightPosition(index, count);
-    case 'tiered':
-      return getTieredLightPosition(index, count);
-    case 'classic':
-    default:
-      const pos = getWeightedTreePosition();
-      pos.x += 0.3 * Math.cos(Math.random() * Math.PI * 2);
-      pos.z += 0.3 * Math.sin(Math.random() * Math.PI * 2);
-      return pos;
-  }
-};
-
 export const FairyLights = ({ state, themeColors, treeStyle }: FairyLightsProps) => {
   const count = CONFIG.counts.lights;
-  const groupRef = useRef<THREE.Group>(null);
-  const geometry = useMemo(() => new THREE.SphereGeometry(0.8, 8, 8), []);
+  const meshRef = useRef<THREE.InstancedMesh>(null);
 
-  // Store color indices for each light to map to theme colors
-  const colorIndices = useMemo(() => {
-    return new Array(count).fill(0).map(() => Math.floor(Math.random() * 4));
-  }, [count]);
+  const lights = useMemo(() => createLights(count), [count]);
+  const geometry = useMemo(() => new THREE.SphereGeometry(BULB_RADIUS, 8, 8), []);
+  const baseColors = useMemo(
+    () => lights.map((light) => new THREE.Color(pickColor(themeColors.lights, light.colorSeed))),
+    [lights, themeColors.lights],
+  );
+  useTreeTargets(lights, treeStyle, sampleLightPoint);
 
-  // Store random speeds and time offsets (only generated once)
-  const lightSpeeds = useMemo(() => {
-    return new Array(count).fill(0).map(() => 2 + Math.random() * 3);
-  }, [count]);
-  
-  const timeOffsets = useMemo(() => {
-    return new Array(count).fill(0).map(() => Math.random() * 100);
-  }, [count]);
-
-  // Data is created once and updated in place
-  const data = useMemo<FairyLightData[]>(() => {
-    return new Array(count).fill(0).map((_, i) => {
-      const chaosPos = getSphericalPosition(40);
-      const targetPos = getTargetPosition(i, count, 'classic'); // Initial style
-      
-      return {
-        chaosPos,
-        targetPos,
-        color: '#FFFFFF', // Will be updated by effect
-        speed: lightSpeeds[i],
-        currentPos: chaosPos.clone(),
-        timeOffset: timeOffsets[i]
-      };
-    });
-  }, [count, lightSpeeds, timeOffsets]);
-  
-  // Update target positions when tree style changes (in place, no re-render)
-  useEffect(() => {
-    data.forEach((objData, i) => {
-      const newTarget = getTargetPosition(i, count, treeStyle);
-      objData.targetPos.copy(newTarget);
-    });
-  }, [treeStyle, count, data]);
-  
-  // Update light colors when theme changes
-  useEffect(() => {
-    if (!groupRef.current) return;
-    
-    groupRef.current.children.forEach((child, i) => {
-      const mesh = child as THREE.Mesh;
-      if (mesh.material) {
-        const colorIndex = colorIndices[i] % themeColors.lights.length;
-        const newColor = themeColors.lights[colorIndex];
-        (mesh.material as THREE.MeshStandardMaterial).color.set(newColor);
-        (mesh.material as THREE.MeshStandardMaterial).emissive.set(newColor);
-        data[i].color = newColor;
-      }
-    });
-  }, [themeColors.lights, colorIndices, data]);
-
-  useFrame((stateObj, delta) => {
-    if (!groupRef.current) return;
+  useFrame(({ clock }, delta) => {
+    const mesh = meshRef.current;
+    if (!mesh) return;
     const isFormed = state === 'FORMED';
-    const time = stateObj.clock.elapsedTime;
-    
-    groupRef.current.children.forEach((child, i) => {
-      const objData = data[i];
-      const target = isFormed ? objData.targetPos : objData.chaosPos;
-      objData.currentPos.lerp(target, delta * 2.0);
-      
-      const mesh = child as THREE.Mesh;
-      mesh.position.copy(objData.currentPos);
-      
-      const intensity = (Math.sin(time * objData.speed + objData.timeOffset) + 1) / 2;
-      if (mesh.material) {
-        (mesh.material as THREE.MeshStandardMaterial).emissiveIntensity = 
-          isFormed ? 3 + intensity * 4 : 0;
-      }
+
+    lights.forEach((light, i) => {
+      moveTowardsState(light, state, MOVE_SPEED, delta);
+      mesh.setMatrixAt(i, matrix.makeTranslation(light.currentPos));
+
+      const blink = (Math.sin(clock.elapsedTime * light.blinkSpeed + light.blinkOffset) + 1) / 2;
+      const glow = isFormed ? THREE.MathUtils.lerp(MIN_GLOW, MAX_GLOW, blink) : 1;
+      mesh.setColorAt(i, color.copy(baseColors[i]).multiplyScalar(glow));
     });
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
   });
 
   return (
-    <group ref={groupRef}>
-      {data.map((obj, i) => {
-        const colorIndex = colorIndices[i] % themeColors.lights.length;
-        const currentColor = themeColors.lights[colorIndex];
-        return (
-          <mesh
-            key={i}
-            scale={[0.15, 0.15, 0.15]}
-            geometry={geometry}>
-            <meshStandardMaterial
-              color={currentColor}
-              emissive={currentColor}
-              emissiveIntensity={0}
-              toneMapped={false}
-            />
-          </mesh>
-        );
-      })}
-    </group>
+    <instancedMesh ref={meshRef} args={[geometry, undefined, count]} frustumCulled={false}>
+      <meshBasicMaterial toneMapped={false} />
+    </instancedMesh>
   );
 };
-

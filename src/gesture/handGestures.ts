@@ -27,8 +27,7 @@ const PINCH_DISTANCE = 0.05;
 const FINGER_EXTENDED_MARGIN = 0.05;
 const THUMB_EXTENDED_MARGIN = 0.08;
 
-const distance3D = (a: Landmark, b: Landmark) =>
-  Math.hypot(a.x - b.x, a.y - b.y, (a.z ?? 0) - (b.z ?? 0));
+const distance3D = (a: Landmark, b: Landmark) => Math.hypot(a.x - b.x, a.y - b.y, (a.z ?? 0) - (b.z ?? 0));
 
 /**
  * Nếu ngón cái và ngón trỏ đang chụm, trả về điểm giữa hai đầu ngón

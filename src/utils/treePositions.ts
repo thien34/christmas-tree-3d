@@ -74,7 +74,7 @@ export const sampleFoliagePoint = (style: TreeStyle, out: THREE.Vector3) => {
 export const sampleOrnamentPoint = (style: TreeStyle, out: THREE.Vector3, excludeTop = 0) => {
   if (style !== 'classic') return sampleFoliagePoint(style, out);
 
-  const t = Math.pow(Math.random(), 1.8) * (1 - excludeTop);
+  const t = Math.random() ** 1.8 * (1 - excludeTop);
   return setCylindrical(out, coneRadiusAt(t), randomAngle(), heightAt(t));
 };
 

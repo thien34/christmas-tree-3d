@@ -27,15 +27,21 @@ export const spin = (rotation: THREE.Euler, speed: THREE.Vector3, delta: number)
   rotation.z += speed.z * delta;
 };
 
-/** Tạo `count` phần tử bắt đầu ở vị trí tán loạn; `targetPos` được điền bởi `useTreeTargets`. */
+/** Tạo `count` phần tử bắt đầu ở vị trí tán loạn. `targetPos` nếu không cho sẵn thì do `useTreeTargets` điền. */
 export const createMorphingItems = <T extends object>(
   count: number,
-  create: (index: number) => T & { chaosPos: THREE.Vector3 },
+  create: (index: number) => T & { chaosPos: THREE.Vector3; targetPos?: THREE.Vector3 },
 ): (T & MorphingItem)[] =>
   Array.from({ length: count }, (_, i) => {
     const item = create(i);
-    return { ...item, targetPos: new THREE.Vector3(), currentPos: item.chaosPos.clone() };
+    return { targetPos: new THREE.Vector3(), ...item, currentPos: item.chaosPos.clone() };
   });
+
+/** Phóng to dần lên kích thước thật khi cây thành hình, thu về 0 khi tán loạn (ngôi sao, thân cây). */
+export const growWhenFormed = (object: THREE.Object3D, speed: number, delta: number) => {
+  const target = useStore.getState().sceneState === 'FORMED' ? 1 : 0;
+  object.scale.setScalar(THREE.MathUtils.damp(object.scale.x, target, speed, delta));
+};
 
 /** Hàm lấy mẫu vị trí trên cây cho phần tử thứ `index` trong tổng số `count`. */
 export type TreeTargetSampler = (style: TreeStyle, index: number, count: number, out: THREE.Vector3) => void;

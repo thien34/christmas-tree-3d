@@ -13,11 +13,11 @@ import { createMorphingItems, moveTowardsState, useTreeTargets } from './shared/
  * Độ sáng được nhân thẳng vào màu từng instance; toneMapped={false} cho phép màu > 1 để Bloom bắt sáng.
  */
 
-const BULB_RADIUS = 0.12;
+const BULB_RADIUS = 0.14;
 const MOVE_SPEED = 2;
 /** Khi đã thành cây, đèn nhấp nháy với độ sáng trong khoảng này. */
-const MIN_GLOW = 3;
-const MAX_GLOW = 7;
+const MIN_GLOW = 1.5;
+const MAX_GLOW = 4;
 
 const createLights = (count: number) =>
   createMorphingItems(count, () => ({

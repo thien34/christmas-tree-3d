@@ -4,31 +4,22 @@ import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
-import {
-  randomAngle,
-  randomEuler,
-  randomInCube,
-  randomItem,
-  randomRange,
-  randomRotationSpeed,
-} from '../../utils/random';
-import { sampleOrnamentPoint } from '../../utils/treePositions';
-import { createMorphingItems, moveTowardsState, spin, useTreeTargets, type TreeTargetSampler } from './shared/motion';
+import { randomAngle, randomEuler, randomInCube, randomRange, randomRotationSpeed } from '../../utils/random';
+import { sampleGiftSpot } from '../../utils/treePositions';
+import { createMorphingItems, moveTowardsState, spin } from './shared/motion';
 
 /*
- * Mỗi hộp quà gồm 1 khối hộp + 5 mảnh ruy băng/nơ. Thay vì 300 × 6 = 1800 mesh riêng lẻ,
- * dùng 2 InstancedMesh (hộp và ruy băng) nên chỉ tốn 2 draw call.
+ * Hộp quà: bay lượn khi tán loạn, xếp ngay ngắn trên mặt đất quanh gốc cây khi cây thành hình.
+ * Mỗi hộp gồm 1 khối hộp + 5 mảnh ruy băng/nơ, vẽ bằng 2 InstancedMesh (hộp và ruy băng) nên chỉ tốn 2 draw call.
  */
 
 const RIBBON_PARTS_PER_GIFT = 5;
 const MOVE_SPEED = 1.2;
-const FLOAT_AMPLITUDE = 0.1;
-const SIZE_RANGES: [number, number][] = [
-  [0.5, 0.8],
-  [0.4, 0.7],
-  [0.45, 0.7],
-];
+/** Tốc độ hộp quà xoay về tư thế đứng thẳng khi đáp xuống đất. */
+const SETTLE_SPEED = 2.5;
+const SIZE_RANGE = { min: 1, max: 2 };
 
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 /** Khối hộp 1×1×1 dùng chung cho hộp quà và mọi mảnh ruy băng (kích thước nằm trong ma trận từng instance). */
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
@@ -43,35 +34,36 @@ const partMatrix = (position: [number, number, number], rotationZ: number, scale
 
 /** Ruy băng dọc, ruy băng ngang, 2 vòng nơ và nút nơ cho hộp cạnh `s`. */
 const ribbonPartMatrices = (s: number) => [
-  partMatrix([0, 0, 0], 0, [s + 0.1, s, s * 0.2]),
-  partMatrix([0, 0, 0], 0, [s * 0.2, s, s + 0.1]),
-  partMatrix([-s * 0.25, s / 2, 0], Math.PI / 3, [s * 0.3, s * 0.15, s * 0.05]),
-  partMatrix([s * 0.25, s / 2, 0], -Math.PI / 3, [s * 0.3, s * 0.15, s * 0.05]),
-  partMatrix([0, s / 2, 0], 0, [s * 0.12, s * 0.12, s * 0.05]),
+  partMatrix([0, 0, 0], 0, [s + 0.05, s + 0.05, s * 0.18]),
+  partMatrix([0, 0, 0], 0, [s * 0.18, s + 0.05, s + 0.05]),
+  partMatrix([-s * 0.2, s / 2 + s * 0.05, 0], Math.PI / 3, [s * 0.3, s * 0.15, s * 0.08]),
+  partMatrix([s * 0.2, s / 2 + s * 0.05, 0], -Math.PI / 3, [s * 0.3, s * 0.15, s * 0.08]),
+  partMatrix([0, s / 2 + s * 0.03, 0], 0, [s * 0.12, s * 0.12, s * 0.1]),
 ];
 
 const createGifts = (count: number) =>
-  createMorphingItems(count, () => {
-    const [minSize, maxSize] = randomItem(SIZE_RANGES);
-    const size = randomRange(minSize, maxSize);
+  createMorphingItems(count, (index) => {
+    const size = randomRange(SIZE_RANGE.min, SIZE_RANGE.max);
+    const targetPos = sampleGiftSpot(index, count);
+    targetPos.y += size / 2; // đáy hộp chạm đất
     return {
       chaosPos: randomInCube(60),
+      targetPos,
       rotation: randomEuler(),
       rotationSpeed: randomRotationSpeed(0.5),
-      floatOffset: randomAngle(),
+      /** Tư thế khi nằm trên đất: đứng thẳng, quay một góc bất kỳ. */
+      upright: new THREE.Quaternion().setFromAxisAngle(Y_AXIS, randomAngle()),
+      /** 0 = đang lộn nhào tự do, 1 = đã nằm yên trên đất. */
+      settled: 0,
       colorSeed: Math.random(),
       boxMatrix: new THREE.Matrix4().makeScale(size, size, size),
       ribbonMatrices: ribbonPartMatrices(size),
     };
   });
 
-const sampleGiftTarget: TreeTargetSampler = (style, _index, _count, out) =>
-  sampleOrnamentPoint(style, out).multiplyScalar(0.95);
-
 // Biến tạm dùng lại mỗi khung hình
 const giftMatrix = new THREE.Matrix4();
 const instanceMatrix = new THREE.Matrix4();
-const position = new THREE.Vector3();
 const quaternion = new THREE.Quaternion();
 const unitScale = new THREE.Vector3(1, 1, 1);
 const color = new THREE.Color();
@@ -83,7 +75,6 @@ export const GiftBoxes = () => {
   const ribbonsRef = useRef<THREE.InstancedMesh>(null);
 
   const gifts = useMemo(() => createGifts(count), [count]);
-  useTreeTargets(gifts, sampleGiftTarget);
 
   // Tô màu từng hộp theo theme (ruy băng đổi màu qua prop `color` bên dưới)
   useLayoutEffect(() => {
@@ -93,7 +84,7 @@ export const GiftBoxes = () => {
     if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true;
   }, [gifts, themeColors.giftColors]);
 
-  useFrame(({ clock }, delta) => {
+  useFrame((_, delta) => {
     const boxes = boxesRef.current;
     const ribbons = ribbonsRef.current;
     if (!boxes || !ribbons) return;
@@ -102,12 +93,10 @@ export const GiftBoxes = () => {
     gifts.forEach((gift, i) => {
       moveTowardsState(gift, sceneState, MOVE_SPEED, delta);
       spin(gift.rotation, gift.rotationSpeed, delta);
+      gift.settled = THREE.MathUtils.damp(gift.settled, sceneState === 'FORMED' ? 1 : 0, SETTLE_SPEED, delta);
 
-      position.copy(gift.currentPos);
-      if (sceneState === 'FORMED') {
-        position.y += Math.sin(clock.elapsedTime * 2 + gift.floatOffset) * FLOAT_AMPLITUDE;
-      }
-      giftMatrix.compose(position, quaternion.setFromEuler(gift.rotation), unitScale);
+      quaternion.setFromEuler(gift.rotation).slerp(gift.upright, gift.settled);
+      giftMatrix.compose(gift.currentPos, quaternion, unitScale);
 
       boxes.setMatrixAt(i, instanceMatrix.multiplyMatrices(giftMatrix, gift.boxMatrix));
       gift.ribbonMatrices.forEach((part, j) => {
@@ -122,10 +111,10 @@ export const GiftBoxes = () => {
   return (
     <>
       <instancedMesh ref={boxesRef} args={[UNIT_BOX, undefined, count]} frustumCulled={false}>
-        <meshStandardMaterial roughness={0.3} metalness={0.1} />
+        <meshStandardMaterial roughness={0.55} metalness={0} />
       </instancedMesh>
       <instancedMesh ref={ribbonsRef} args={[UNIT_BOX, undefined, count * RIBBON_PARTS_PER_GIFT]} frustumCulled={false}>
-        <meshStandardMaterial color={themeColors.gold} roughness={0.15} metalness={1} />
+        <meshStandardMaterial color={themeColors.gold} roughness={0.3} metalness={0.8} />
       </instancedMesh>
     </>
   );

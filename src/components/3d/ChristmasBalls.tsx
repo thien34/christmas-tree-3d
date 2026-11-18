@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
-import { randomAngle, randomInCube, randomItem, randomRange } from '../../utils/random';
+import { randomAngle, randomInCube, randomRange } from '../../utils/random';
 import { sampleOrnamentPoint } from '../../utils/treePositions';
 import { createMorphingItems, moveTowardsState, useTreeTargets, type TreeTargetSampler } from './shared/motion';
 
@@ -17,12 +17,9 @@ const MOVE_SPEED = 1.5;
 /** Tỉ lệ quả cầu có hiệu ứng lấp lánh vàng. */
 const SPARKLE_CHANCE = 0.25;
 /** Lúc lấp lánh mạnh nhất, quả cầu sáng gấp (1 + SPARKLE_GLOW) lần bình thường. */
-const SPARKLE_GLOW = 4;
-const SCALE_RANGES: [number, number][] = [
-  [0.5, 0.8],
-  [0.4, 0.7],
-  [0.45, 0.7],
-];
+const SPARKLE_GLOW = 1.5;
+/** Bán kính quả cầu: đủ nhỏ để điểm xuyết cho tán lá chứ không che hết lá. */
+const RADIUS_RANGE = { min: 0.3, max: 0.52 };
 
 interface Sparkle {
   speed: number;
@@ -46,10 +43,9 @@ const createSparkle = (): Sparkle => {
 
 const createBalls = (count: number) =>
   createMorphingItems(count, () => {
-    const [minScale, maxScale] = randomItem(SCALE_RANGES);
     return {
       chaosPos: randomInCube(60),
-      scale: randomRange(minScale, maxScale),
+      scale: randomRange(RADIUS_RANGE.min, RADIUS_RANGE.max),
       colorSeed: Math.random(),
       sparkle: Math.random() < SPARKLE_CHANCE ? createSparkle() : null,
     };
@@ -62,8 +58,7 @@ const sparkleAmount = (sparkle: Sparkle, time: number) => {
   return (Math.sin(time * sparkle.speed + sparkle.phase) + 1) / 2;
 };
 
-const sampleBallTarget: TreeTargetSampler = (style, _index, _count, out) =>
-  sampleOrnamentPoint(style, out).multiplyScalar(0.95);
+const sampleBallTarget: TreeTargetSampler = (style, _index, _count, out) => sampleOrnamentPoint(style, out);
 
 // Biến tạm dùng lại mỗi khung hình
 const matrix = new THREE.Matrix4();
@@ -110,7 +105,7 @@ export const ChristmasBalls = () => {
   return (
     <instancedMesh ref={meshRef} args={[undefined, undefined, count]} frustumCulled={false}>
       <sphereGeometry args={[1, 16, 16]} />
-      <meshStandardMaterial roughness={0.15} metalness={0.9} envMapIntensity={1.5} />
+      <meshStandardMaterial roughness={0.25} metalness={0.85} />
     </instancedMesh>
   );
 };

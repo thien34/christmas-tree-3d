@@ -13,6 +13,7 @@ import { CameraRig } from './scene/CameraRig';
 import { PostEffects } from './scene/PostEffects';
 import { SceneLighting } from './scene/SceneLighting';
 import { TopStar } from './TopStar';
+import { TreeBase } from './TreeBase';
 
 /** Tốc độ cây tự quay (rad/giây). */
 const TREE_SPIN_SPEED = 0.2;
@@ -33,12 +34,13 @@ export const Experience = () => {
       <SceneLighting />
       <Atmosphere />
 
-      <group ref={treeRef} position={[0, -2, 0]}>
+      <group ref={treeRef} position={[0, 0.5, 0]}>
         <Foliage />
         <ChristmasBalls />
         <FairyLights />
         <GiftBoxes />
         <TopStar />
+        <TreeBase />
         <PhotoOrnaments />
       </group>
 

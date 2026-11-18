@@ -1,10 +1,11 @@
 export const CONFIG = {
-  tree: { height: 26, radius: 11 },
+  /** Kích thước tán cây; thân cây cao `trunkHeight` nối từ mặt đất lên gốc tán. */
+  tree: { height: 26, radius: 11, trunkHeight: 2.5 },
   counts: {
-    foliage: 25_000,
-    ornaments: 400,
-    lights: 400,
-    gifts: 300,
+    foliage: 42_000,
+    ornaments: 150,
+    lights: 320,
+    gifts: 34,
   },
   colors: {
     warmLight: '#FFD54F',

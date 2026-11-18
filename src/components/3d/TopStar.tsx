@@ -3,7 +3,8 @@ import { useFrame } from '@react-three/fiber';
 import { Float } from '@react-three/drei';
 import * as THREE from 'three';
 import { CONFIG } from '../../constants/config';
-import { useStore, useThemeColors } from '../../store';
+import { useThemeColors } from '../../store';
+import { growWhenFormed } from './shared/motion';
 
 const SPIN_SPEED = 0.5;
 const GROW_SPEED = 3;
@@ -41,15 +42,14 @@ export const TopStar = () => {
     const group = groupRef.current;
     if (!group) return;
     group.rotation.y += delta * SPIN_SPEED;
-    const targetScale = useStore.getState().sceneState === 'FORMED' ? 1 : 0;
-    group.scale.setScalar(THREE.MathUtils.damp(group.scale.x, targetScale, GROW_SPEED, delta));
+    growWhenFormed(group, GROW_SPEED, delta);
   });
 
   return (
     <group ref={groupRef} position={[0, CONFIG.tree.height / 2 + 1.8, 0]} scale={0}>
       <Float speed={2} rotationIntensity={0.2} floatIntensity={0.2}>
         <mesh geometry={geometry}>
-          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={1.5} roughness={0.1} metalness={1} />
+          <meshStandardMaterial color={color} emissive={color} emissiveIntensity={0.9} roughness={0.25} metalness={1} />
         </mesh>
       </Float>
     </group>

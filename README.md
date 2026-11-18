@@ -1,170 +1,119 @@
-# 🎄 Christmas Tree 3D
+# Cây thông Noel 3D
 
-Ứng dụng cây thông Noel 3D tương tác với Three.js và React Three Fiber, được điều khiển bằng cử chỉ tay.
+Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì hàng nghìn quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây. Bạn có thể đổi màu, đổi kiểu cây và treo ảnh của mình lên cây như ảnh Polaroid.
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![React](https://img.shields.io/badge/React-19-61dafb)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6)
-![Three.js](https://img.shields.io/badge/Three.js-0.182-000000)
+| Xoè tay: tán loạn | Nắm tay: thành cây |
+| --- | --- |
+| <img src="docs/tree-chaos.jpg" alt="Các món trang trí bay tán loạn" width="400" /> | <img src="docs/tree-formed.jpg" alt="Cây thông đã tụ lại thành hình" width="400" /> |
 
-## ✨ Tính năng
+## Cách chạy
 
-- 🎄 **Cây thông 3D** với 25,000+ particles
-- 🖼️ **32 ảnh Polaroid** với hiệu ứng wobble
-- 🎁 **300 hộp quà** 3D với nơ vàng
-- 🔴 **400 quả cầu** trang trí với sparkle effect
-- 💡 **400 đèn LED** nhấp nháy đa màu
-- ⭐ **Ngôi sao vàng** quay trên đỉnh
-- 👋 **Điều khiển cử chỉ tay** với MediaPipe AI
-- 🎨 **Post-processing** effects (Bloom, Vignette)
-- 🌌 **5000 ngôi sao** background
+1. **Cài Node.js** bản LTS từ [nodejs.org](https://nodejs.org/) (cần bản 20.19 trở lên).
+2. **Cài pnpm** (chỉ làm lần đầu). Mở Terminal bất kỳ và chạy:
 
-## 🚀 Quick Start
+   ```
+   npm install -g pnpm
+   ```
 
-### Yêu cầu
+3. **Mở Terminal** trong thư mục `christmas-tree-3d` (Windows: chuột phải vào thư mục → **Open in Terminal**).
+4. **Cài thư viện** (chỉ làm lần đầu):
 
-- Node.js >= 18
-- pnpm >= 8
+   ```
+   pnpm install
+   ```
 
-### Cài đặt
+5. **Chạy:**
 
-```bash
-pnpm install
-```
+   ```
+   pnpm dev
+   ```
 
-### Development
+6. Mở trình duyệt (nên dùng Chrome hoặc Edge) vào **http://localhost:5173** và bấm **Cho phép** khi được hỏi quyền camera.
 
-```bash
-pnpm dev
-```
+Lần đầu mở trang cần Internet để tải model nhận diện tay và ảnh môi trường, nên màn hình có thể đen vài giây.
 
-Mở trình duyệt: `http://localhost:5173`
+## Cách dùng
 
-### Build Production
+**Bằng chuột**
 
-```bash
-pnpm build
-```
+| Thao tác | Kết quả |
+| --- | --- |
+| Kéo chuột | Xoay quanh cây |
+| Cuộn chuột | Phóng to / thu nhỏ |
+| Nhấp đúp | Chuyển qua lại giữa tán loạn và thành cây |
+| Nút **Photos** | Chọn ảnh trong máy để treo lên cây |
+| Nút **Debug** | Hiện hình camera, khung xương bàn tay và tên cử chỉ máy đang thấy |
 
-### Preview Production
+**Bằng cử chỉ tay** (đưa cả bàn tay vào khung hình camera)
 
-```bash
-pnpm preview
-```
+| Cử chỉ | Kết quả |
+| --- | --- |
+| ✋ Xoè tay | Các món trang trí bay tán loạn |
+| ✊ Nắm tay | Tụ lại thành cây |
+| 👍 Giơ ngón cái | Đổi màu: Giáng sinh → hồng → tím → xanh |
+| ☝️ 1 ngón | Cây hình nón cổ điển |
+| ✌️ 2 ngón | Cây nhiều tầng |
+| 3 ngón (trỏ, giữa, áp út) | Cây xoắn ốc |
+| 🤏 Chụm ngón cái và ngón trỏ | Phóng to tấm ảnh gần tay nhất; thả tay để ảnh về chỗ cũ |
 
-## 🎮 Cách sử dụng
+## Gặp lỗi?
 
-### Điều khiển chuột
-- **Click & Drag**: Xoay camera
-- **Scroll**: Zoom in/out
-- **Button "Assemble Tree"**: Chuyển từ CHAOS → FORMED
-- **Button "Disperse"**: Chuyển từ FORMED → CHAOS
+| Lỗi | Cách sửa |
+| --- | --- |
+| `pnpm` không được nhận dạng | Làm lại bước 2, rồi đóng và mở lại Terminal |
+| `ERR_PNPM_IGNORED_BUILDS` khi cài | Chạy `pnpm approve-builds`, chọn gói được liệt kê, rồi `pnpm install` lại |
+| Màn hình đen rất lâu | Kiểm tra kết nối Internet, rồi tải lại trang |
+| `ERROR: Camera permission denied` | Bấm biểu tượng camera / ổ khoá trên thanh địa chỉ → cho phép camera → tải lại trang |
+| `ERROR: No camera found` | Cắm webcam vào máy |
+| `ERROR: Camera in use by another app` | Tắt các ứng dụng đang dùng camera (Zoom, Meet, OBS...) |
+| Cử chỉ không ăn | Bật **Debug** để xem máy đang thấy gì; ngồi chỗ đủ sáng, cách camera khoảng 0,5–1 m |
+| Mở thẳng file `dist/index.html` bị trắng trang | Bản build phải chạy qua server: dùng `pnpm preview` |
 
-### Điều khiển cử chỉ tay
-1. Bật camera (cho phép quyền truy cập)
-2. Đưa tay vào khung hình
-3. **Tay mở (Open Palm)** → CHAOS
-4. **Nắm đấm (Closed Fist)** → FORMED
+## Quyền riêng tư
 
-### Debug Mode
-- Click nút **🛠 DEBUG** để xem:
-  - Camera feed
-  - Hand tracking visualization
-  - Gesture detection status
+Thư viện nhận diện tay `@mediapipe/tasks-vision` (từ bản 1.x) tự gửi thống kê sử dụng về Google tại `odml.pa.googleapis.com` và chưa có cách tắt. Nếu đưa app lên mạng cho người khác dùng, bạn nên báo trước cho họ (xem [Privacy Notice của MediaPipe](https://www.npmjs.com/package/@mediapipe/tasks-vision)). Muốn tránh hoàn toàn thì đổi sang bản `0.10.35` trong `package.json`; đường dẫn file WASM tự đổi theo.
 
-## 📚 Documentation
+## Kỹ thuật
 
-Chi tiết trong thư mục [`docs/`](docs/):
+Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông qua **React Three Fiber** (dùng React để mô tả cảnh 3D), build bằng Vite 8.
 
-- **[Project Structure](docs/PROJECT_STRUCTURE.md)** - Tổng quan cấu trúc
-- **[Architecture](docs/ARCHITECTURE.md)** - Kiến trúc và SOLID principles
-- **[Components](docs/COMPONENTS.md)** - Chi tiết từng component
-- **[Development Guide](docs/DEVELOPMENT.md)** - Hướng dẫn phát triển
-- **[Refactoring Summary](docs/REFACTORING_SUMMARY.md)** - Quá trình refactoring
+- **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây. Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm.
+- **25.000 hạt lá chạy trên GPU:** cả hai vị trí của từng hạt được nạp sẵn vào card đồ hoạ, *shader* (chương trình nhỏ chạy trên GPU, viết bằng GLSL) tự trộn giữa hai vị trí và tô màu tối ở gốc, sáng dần lên ngọn.
+- **Instancing:** 300 hộp quà và 400 bóng đèn được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*). Riêng hộp quà giảm từ 1.800 xuống 2 draw call.
+- **Ba kiểu cây:** vị trí trên cây được tính bằng toán: hình nón (dày ở gốc, thưa ở ngọn), nhiều hình nón cụt chồng lên nhau, hoặc các nhánh xoắn quanh thân. Đổi kiểu chỉ tính lại vị trí đích, các món trang trí tự bay sang chỗ mới.
+- **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay (khoảng cách đầu ngón cái và ngón trỏ) và đếm ngón.
+- **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao); *Vignette* làm tối dần về các góc màn hình.
 
-## 🏗️ Kiến trúc
+**Muốn chỉnh?**
 
-Dự án tuân theo **Clean Architecture** và **SOLID Principles**:
+| Muốn đổi | Sửa ở |
+| --- | --- |
+| Số hạt lá, quả cầu, đèn, hộp quà; kích thước cây | `src/constants/config.ts` |
+| Bảng màu các theme | `src/constants/themes.ts` |
+| Hình dạng các kiểu cây | `src/utils/treePositions.ts` |
+| Ngưỡng nhận diện cử chỉ | `src/gesture/handGestures.ts` |
+
+**Cấu trúc thư mục**
 
 ```
 src/
-├── components/          # React Components
-│   ├── 3d/             # 3D Scene Components (9 files)
-│   ├── UI/             # UI Components (3 files)
+├── App.tsx                 # Ghép mọi thứ lại: cảnh 3D, nhận diện tay, thanh nút
+├── components/
+│   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đèn, hộp quà, ngôi sao, ảnh
+│   │   ├── photos/         # Ảnh Polaroid và cách chọn ảnh theo vị trí tay
+│   │   ├── scene/          # Camera, ánh sáng, nền trời, hậu kỳ
+│   │   └── shared/         # Chuyển động tán loạn ↔ thành cây dùng chung
+│   ├── UI/                 # Nút Photos, Debug, dòng trạng thái
 │   └── GestureController.tsx
-├── constants/          # Configuration (1 file)
-├── hooks/              # Custom Hooks (3 files)
-├── shaders/            # GLSL Shaders (1 file)
-├── types/              # TypeScript Types (1 file)
-├── utils/              # Utilities (1 file)
-├── App.tsx             # Main App (35 lines)
-└── main.tsx            # Entry point
+├── gesture/                # Camera + MediaPipe → các sự kiện cử chỉ
+├── hooks/                  # Trạng thái của app (theme, kiểu cây, ảnh, zoom...)
+├── constants/              # Cấu hình và bảng màu
+├── shaders/                # Shader GLSL cho hạt lá
+└── utils/                  # Hàm ngẫu nhiên, tính vị trí trên cây
 ```
 
-**Highlights**:
-- ✅ 28 files, avg 56 lines/file (was: 1 file, 1046 lines)
-- ✅ Full TypeScript type safety
-- ✅ Modular và dễ maintain
-- ✅ 100% giữ nguyên chức năng
+Lệnh khác: `pnpm build` (kiểm tra kiểu + build vào `dist/`), `pnpm preview` (xem bản build), `pnpm typecheck` (chỉ kiểm tra kiểu).
 
-## 🛠️ Tech Stack
+## License
 
-| Category | Technologies |
-|----------|-------------|
-| **Framework** | React 19, TypeScript 5.9 |
-| **3D Engine** | Three.js 0.182, React Three Fiber 9 |
-| **3D Helpers** | @react-three/drei, @react-three/postprocessing |
-| **AI** | MediaPipe Tasks Vision |
-| **Build** | Vite 7 |
-
-## 📊 Thống kê
-
-| Metric | Value |
-|--------|-------|
-| Total Components | 13 |
-| 3D Particles | 25,000 |
-| Photo Ornaments | 50 |
-| Christmas Balls | 400 |
-| Fairy Lights | 400 |
-| Gift Boxes | 300 |
-| Background Stars | 5,000 |
-| Source Files | 24 |
-| Lines of Code | ~1,343 |
-
-## 🧪 Testing
-
-```bash
-# Type check
-pnpm typecheck
-```
-
-## 🤝 Contributing
-
-Contributions welcome! Vui lòng đọc [Development Guide](docs/DEVELOPMENT.md) trước khi contribute.
-
-### Guidelines
-1. Fork repo
-2. Tạo branch: `feature/your-feature`
-3. Follow code style trong [Development Guide](docs/DEVELOPMENT.md)
-4. Test kỹ
-5. Commit với message rõ ràng
-6. Tạo Pull Request
-
-## 📝 License
-
-MIT License - xem file [LICENSE](LICENSE)
-
-## 🙏 Credits
-
-- [Three.js](https://threejs.org/)
-- [React Three Fiber](https://docs.pmnd.rs/react-three-fiber/)
-- [MediaPipe](https://developers.google.com/mediapipe)
-- [@react-three/drei](https://github.com/pmndrs/drei)
-
-## 📞 Support
-
-Có vấn đề? [Tạo issue](../../issues)
-
----
-
-**Made with ❤️ and 🎄 | Merry Christmas! 🎅**
+MIT, xem [LICENSE](LICENSE).

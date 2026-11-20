@@ -29,3 +29,32 @@ export const detectPinch = (landmarks: Landmark[]): HandPosition | null => {
     y: (thumbTip.y + indexTip.y) / 2,
   };
 };
+
+/* ---------- ✌️ (dự phòng khi MediaPipe không nhận ra "Victory") ---------- */
+
+const WRIST = 0;
+/** Khớp giữa (PIP) và đầu ngón của từng ngón. */
+const FINGER = {
+  index: { pip: 6, tip: 8 },
+  middle: { pip: 10, tip: 12 },
+  ring: { pip: 14, tip: 16 },
+  pinky: { pip: 18, tip: 20 },
+} as const;
+
+/**
+ * Tỉ lệ (khoảng cách cổ tay → đầu ngón) / (cổ tay → khớp giữa): ngón duỗi thì đầu ngón xa cổ tay hơn hẳn khớp giữa
+ * (~1.3–1.5), ngón gập thì đầu ngón quặp về gần lòng bàn tay (< 1). Không phụ thuộc tay đang nghiêng hay xoay.
+ */
+const fingerReach = (landmarks: Landmark[], { pip, tip }: { pip: number; tip: number }) =>
+  distance3D(landmarks[WRIST], landmarks[tip]) / Math.max(distance3D(landmarks[WRIST], landmarks[pip]), 1e-6);
+
+const EXTENDED_REACH = 1.15;
+const FOLDED_REACH = 1.0;
+
+/** Ngón trỏ và ngón giữa duỗi, ngón áp út và ngón út gập (ngón cái tuỳ ý). */
+export const isVictoryPose = (landmarks: Landmark[]) =>
+  landmarks.length > FINGER.pinky.tip &&
+  fingerReach(landmarks, FINGER.index) > EXTENDED_REACH &&
+  fingerReach(landmarks, FINGER.middle) > EXTENDED_REACH &&
+  fingerReach(landmarks, FINGER.ring) < FOLDED_REACH &&
+  fingerReach(landmarks, FINGER.pinky) < FOLDED_REACH;

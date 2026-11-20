@@ -251,3 +251,65 @@ body,
 .stats-panel .is-bad {
   color: var(--error);
 }
+
+/* ---------- Greeting ---------- */
+
+/* Lời chúc ở phía dưới màn hình, hiện từng chữ khi cây thành hình. Không bắt chuột để vẫn nhấp đúp được vào cảnh. */
+.greeting {
+  position: absolute;
+  bottom: 7%;
+  left: 50%;
+  z-index: 5;
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  transform: translateX(-50%);
+  color: #fff4d6;
+  font-family: 'Segoe Script', 'Brush Script MT', 'Snell Roundhand', cursive;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow:
+    0 0 12px rgba(255, 200, 90, 0.75),
+    0 0 32px rgba(255, 170, 60, 0.45),
+    0 2px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.greeting__title {
+  font-size: clamp(26px, 5vw, 56px);
+}
+
+.greeting__name {
+  color: var(--accent);
+  font-size: clamp(30px, 6vw, 68px);
+  font-weight: 700;
+}
+
+/* Từng chữ mờ dần và nổi lên; khi ẩn thì tắt cùng lúc, nhanh */
+.greeting__letter {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(0.4em);
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease,
+    transform 0.3s ease;
+}
+
+.greeting.is-visible .greeting__letter {
+  opacity: 1;
+  filter: blur(0);
+  transform: none;
+  transition-duration: 0.7s;
+  /* Chờ cây tụ lại gần xong (~1.2 giây) rồi mới hiện chữ đầu tiên */
+  transition-delay: calc(1.2s + var(--i) * 0.06s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .greeting__letter,
+  .greeting.is-visible .greeting__letter {
+    filter: none;
+    transform: none;
+    transition-delay: 0s;
+  }
+}

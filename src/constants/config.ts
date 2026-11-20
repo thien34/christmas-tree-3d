@@ -19,5 +19,8 @@ export const CONFIG = {
 /** Sau một lần giơ ngón cái (đổi theme), phải chờ chừng này mới nhận lần kế tiếp, tránh đổi liên tục. */
 export const THUMB_UP_COOLDOWN_MS = 1500;
 
+/** Giữ ✌️ thì cứ chừng này lại bắn một loạt pháo hoa. */
+export const FIREWORKS_COOLDOWN_MS = 1500;
+
 /** Độ tin cậy tối thiểu để chấp nhận một cử chỉ từ MediaPipe. */
 export const GESTURE_MIN_SCORE = 0.4;

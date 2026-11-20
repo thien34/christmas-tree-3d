@@ -1,6 +1,6 @@
 # Cây thông Noel 3D
 
-Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây giữa trời đêm tuyết rơi, quà xếp quanh gốc. Bạn có thể đổi bảng màu và treo ảnh của mình lên cây như ảnh Polaroid.
+Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây giữa trời đêm tuyết rơi, quà xếp quanh gốc. Bạn có thể đổi bảng màu, treo ảnh của mình lên cây như ảnh Polaroid, bật nhạc Jingle Bells cho đèn nháy theo nhịp, bắn pháo hoa và gửi lời chúc có tên người nhận.
 
 | Xoè tay: tán loạn | Nắm tay: thành cây |
 | --- | --- |
@@ -42,7 +42,16 @@ Lần đầu mở trang cần Internet để tải model nhận diện tay, nên
 | Cuộn chuột | Phóng to / thu nhỏ |
 | Nhấp đúp | Chuyển qua lại giữa tán loạn và thành cây |
 | Nút hình tấm ảnh (góc dưới phải) | Chọn ảnh trong máy để treo lên cây |
-| Nút hình máy quay (debug) | Hiện hình camera, khung xương bàn tay và tên cử chỉ máy đang thấy |
+| Nút hình nốt nhạc | Bật/tắt nhạc Jingle Bells; đèn trên cây nháy theo từng nốt, ngôi sao sáng bừng theo phách |
+| Nút hình máy quay (debug) | Hiện hình camera (kéo thả về 4 góc được), khung xương bàn tay, tên cử chỉ máy đang thấy và chỉ số FPS, RAM |
+
+**Bằng bàn phím**
+
+| Phím | Kết quả |
+| --- | --- |
+| ← / → | Xoay cây sang trái / phải |
+| F | Bắn pháo hoa |
+| M | Bật/tắt nhạc |
 
 **Bằng cử chỉ tay** (đưa cả bàn tay vào khung hình camera)
 
@@ -51,7 +60,10 @@ Lần đầu mở trang cần Internet để tải model nhận diện tay, nên
 | ✋ Xoè tay | Lá cây và đồ trang trí bay tán loạn |
 | ✊ Nắm tay | Tụ lại thành cây, hộp quà xếp quanh gốc |
 | 👍 Giơ ngón cái | Đổi bảng màu: Giáng sinh (xanh thông, đỏ, vàng) → hồng phấn → tím → xanh băng |
+| ✌️ Giơ hai ngón | Bắn một loạt pháo hoa; giữ nguyên thì cứ 1,5 giây bắn thêm một loạt |
 | 🤏 Chụm ngón cái và ngón trỏ | Phóng to một tấm ảnh; thả tay để ảnh về chỗ cũ. Mỗi lần chụm lại ra một tấm khác |
+
+**Gửi lời chúc:** thêm `?to=` và tên người nhận vào cuối đường link, ví dụ `http://localhost:5173/?to=Lan`. Khi cây thành hình, dòng chữ "Merry Christmas, Lan" sẽ hiện lên từng chữ. Không có `?to=` thì chỉ hiện "Merry Christmas".
 
 ## Gặp lỗi?
 
@@ -80,6 +92,8 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 - **Ảnh Polaroid:** mỗi ảnh có một chỗ treo cố định bên ngoài tán lá, mặt hướng ra ngoài; ảnh không vuông được cắt lấy phần giữa cho vừa khung. Mỗi lần chụm tay phóng to một ảnh chưa xem.
 - **Khung cảnh:** nền trời đêm chuyển màu, nền tuyết hắt sáng quanh gốc có bụi tuyết lấp lánh, và tuyết rơi (cũng chạy trên GPU).
 - **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay (khoảng cách đầu ngón cái và ngón trỏ).
+- **Nhạc tự tổng hợp:** không dùng file nhạc; "Jingle Bells" (bài hát năm 1857, đã thuộc phạm vi công cộng) được chơi bằng Web Audio, gồm tiếng chuông cho giai điệu, bè trầm và tiếng lục lạc. App tự lên lịch từng nốt nên biết chính xác lúc nốt vang lên, đèn trên cây nháy khớp với tai nghe.
+- **Pháo hoa trên GPU:** mỗi quả là vài trăm hạt; chỉ ghi vị trí, vận tốc, màu một lần lúc bắn, còn đường bay lên, nổ tung, rơi và tắt dần đều do shader tính.
 - **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao) nhưng bỏ qua ảnh Polaroid; *Vignette* làm tối dần về các góc màn hình; *tone mapping* nén vùng quá sáng lại để không bị cháy trắng.
 
 **Muốn chỉnh?**
@@ -93,6 +107,8 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 | Nền trời, tuyết rơi, độ sáng và Bloom | `src/components/3d/scene/` |
 | Kích thước, độ sáng của ảnh Polaroid | `src/components/3d/photos/` |
 | Ngưỡng nhận diện cử chỉ | `src/gesture/handGestures.ts` |
+| Bài nhạc, nhịp độ, âm lượng | `src/audio/jingleBells.ts`, `src/audio/music.ts` |
+| Pháo hoa (số hạt, độ cao, tốc độ nổ) | `src/components/3d/scene/Fireworks.tsx` |
 
 **Cấu trúc thư mục**
 
@@ -102,12 +118,13 @@ src/
 ├── components/
 │   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đèn, hộp quà, ngôi sao, thân cây, ảnh
 │   │   ├── photos/         # Ảnh Polaroid: treo lên cây, chọn ảnh để phóng to
-│   │   ├── scene/          # Camera, ánh sáng, nền trời, tuyết rơi, hậu kỳ
+│   │   ├── scene/          # Camera, ánh sáng, nền trời, tuyết rơi, pháo hoa, hậu kỳ
 │   │   └── shared/         # Chuyển động tán loạn ↔ thành cây dùng chung
-│   ├── UI/                 # Nút thêm ảnh, nút debug, icon, dòng trạng thái
+│   ├── UI/                 # Các nút, lời chúc, bảng chỉ số, icon, dòng trạng thái
 │   └── GestureController.tsx
+├── audio/                  # Nhạc nền tự tổng hợp (Web Audio) + nhịp cho đèn nháy
 ├── gesture/                # Camera + MediaPipe → cập nhật store theo cử chỉ
-├── store.ts                # Trạng thái dùng chung của app (zustand): theme, ảnh, zoom...
+├── store.ts                # Trạng thái dùng chung của app (zustand): theme, ảnh, zoom, nhạc...
 ├── constants/              # Cấu hình và bảng màu
 ├── shaders/                # Shader GLSL cho hạt lá
 └── utils/                  # Hàm ngẫu nhiên, hình dạng cây và vị trí trên cây

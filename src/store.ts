@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { startMusic, stopMusic } from './audio/music';
 import { THEME_ORDER, THEMES } from './constants/themes';
 import type { HandPosition, SceneState, ThemeType } from './types';
 
@@ -10,6 +11,14 @@ interface AppState {
   /** Ảnh người dùng thêm vào, dưới dạng object URL. */
   photoUrls: string[];
   debugMode: boolean;
+  musicOn: boolean;
+  /**
+   * Yêu cầu xoay cây (phím mũi tên): `direction` 1 = sang phải, -1 = sang trái. Mỗi yêu cầu là một object mới,
+   * cảnh 3D so tham chiếu để biết có yêu cầu mới, nên nhấn hai lần liền cùng hướng vẫn tính hai lần.
+   */
+  spinRequest: { direction: 1 | -1 } | null;
+  /** Số lần đã yêu cầu bắn pháo hoa; cảnh 3D thấy số này tăng thì bắn một loạt. */
+  fireworksRequests: number;
   /** Dòng trạng thái trên cùng; bắt đầu bằng "ERROR: " thì hiện kiểu lỗi (tiền tố này không hiện ra). */
   status: string;
 }
@@ -24,6 +33,9 @@ export const useStore = create<AppState>(() => ({
   pinch: null,
   photoUrls: [],
   debugMode: false,
+  musicOn: false,
+  spinRequest: null,
+  fireworksRequests: 0,
   status: 'Starting…',
 }));
 
@@ -48,4 +60,23 @@ export const addPhotos = (files: Iterable<File>) => {
 
   useStore.setState((s) => ({ photoUrls: [...s.photoUrls, ...urls] }));
   if (skipped > 0) setStatus(`ERROR: ${skipped} file(s) skipped, not an image`);
+};
+
+export const spinTree = (direction: 1 | -1) => useStore.setState({ spinRequest: { direction } });
+
+export const launchFireworks = () => useStore.setState((s) => ({ fireworksRequests: s.fireworksRequests + 1 }));
+
+/** Bật/tắt nhạc nền. Phải gọi từ một thao tác của người dùng (nhấn nút, phím) vì trình duyệt chặn tự phát nhạc. */
+export const toggleMusic = () => {
+  if (useStore.getState().musicOn) {
+    stopMusic();
+    useStore.setState({ musicOn: false });
+    return;
+  }
+  useStore.setState({ musicOn: true });
+  startMusic().catch((error: unknown) => {
+    console.error('Music error:', error);
+    useStore.setState({ musicOn: false });
+    setStatus('ERROR: Could not play music');
+  });
 };

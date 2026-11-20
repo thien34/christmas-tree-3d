@@ -1,8 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 import type { GestureRecognizer, GestureRecognizerResult } from '@mediapipe/tasks-vision';
-import { GESTURE_MIN_SCORE, THUMB_UP_COOLDOWN_MS } from '../constants/config';
-import { cycleTheme, setStatus, useStore } from '../store';
-import { detectPinch } from './handGestures';
+import { FIREWORKS_COOLDOWN_MS, GESTURE_MIN_SCORE, THUMB_UP_COOLDOWN_MS } from '../constants/config';
+import { cycleTheme, launchFireworks, setStatus, useStore } from '../store';
+import { detectPinch, isVictoryPose } from './handGestures';
 
 /** Phiên bản file WASM phải khớp với phiên bản thư viện; Vite điền sẵn từ package.json (xem vite.config.ts). */
 const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIAPIPE_VERSION__}/wasm`;
@@ -30,12 +30,18 @@ export const trackingStats = {
 const describeError = (error: unknown) =>
   `ERROR: ${error instanceof Error ? (CAMERA_ERRORS[error.name] ?? error.message) : 'Hand tracking failed'}`;
 
+/** Phải giữ ✌️ chừng này mới bắn pháo hoa. */
+const VICTORY_HOLD_MS = 150;
+
 /**
  * Tạo hàm chuyển kết quả nhận diện của từng khung hình thành thay đổi trong store:
- * xoè tay → CHAOS, nắm tay → FORMED, giơ ngón cái → đổi theme, chụm tay → phóng to ảnh.
+ * xoè tay → CHAOS, nắm tay → FORMED, giơ ngón cái → đổi theme, ✌️ → bắn pháo hoa, chụm tay → phóng to ảnh.
  */
 const createGestureHandler = () => {
   let lastThumbUp = 0;
+  let lastFireworks = 0;
+  /** Lúc bắt đầu giữ ✌️; null khi không giữ. */
+  let victorySince: number | null = null;
 
   return (result: GestureRecognizerResult, now: number) => {
     const { pinch: activePinch, debugMode } = useStore.getState();
@@ -58,10 +64,22 @@ const createGestureHandler = () => {
       }
     }
 
+    // ✌️: tin nhãn "Victory" của MediaPipe, hoặc tự kiểm tra các ngón (MediaPipe hay trả "None" khi tay nghiêng,
+    // quay mu bàn tay). Phải giữ tư thế một chút để lúc xoè/nắm tay lướt qua dáng ✌️ không bị tính nhầm.
+    const isVictory =
+      (isConfident && gesture.categoryName === 'Victory') || (landmarks !== undefined && isVictoryPose(landmarks));
+    victorySince = isVictory ? (victorySince ?? now) : null;
+    const heldLongEnough = victorySince !== null && now - victorySince >= VICTORY_HOLD_MS;
+    const fired = heldLongEnough && now - lastFireworks > FIREWORKS_COOLDOWN_MS;
+    if (fired) {
+      lastFireworks = now;
+      launchFireworks();
+    }
+
     if (debugMode) {
-      const pinchLabel = pinch ? ' · pinch' : '';
-      if (!gesture) setStatus(`No hand detected${pinchLabel}`);
-      else if (isConfident) setStatus(`Gesture: ${gesture.categoryName}${pinchLabel}`);
+      const tags = (pinch ? ' · pinch' : '') + (isVictory ? ' · ✌️' : '') + (fired ? ' · fireworks!' : '');
+      if (!gesture) setStatus(`No hand detected${tags}`);
+      else setStatus(`Gesture: ${isConfident ? gesture.categoryName : 'None'}${tags}`);
     }
   };
 };

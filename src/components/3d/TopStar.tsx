@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Float } from '@react-three/drei';
 import * as THREE from 'three';
+import { BASS_CHANNEL, pulse } from '../../audio/music';
 import { CONFIG } from '../../constants/config';
 import { useThemeColors } from '../../store';
 import { growWhenFormed } from './shared/motion';
@@ -15,6 +16,8 @@ const GROW_SPEED = 3;
 const STAR_LIFT = 0.6;
 /** Độ phát sáng của ngôi sao; tăng lên thì quầng sáng toả rộng hơn. */
 const STAR_GLOW = 2.2;
+/** Có nhạc thì mỗi phách mạnh (bè trầm) làm sao sáng thêm chừng này lần rồi dịu lại. */
+const BEAT_BOOST = 0.6;
 
 /** Hình ngôi sao `points` cánh, bán kính đỉnh ngoài `outer` và đỉnh trong `inner`. */
 const createStarShape = (points = 5, outer = 1.3, inner = 0.7) => {
@@ -44,6 +47,7 @@ const createStarGeometry = () =>
 export const TopStar = () => {
   const color = useThemeColors().gold;
   const groupRef = useRef<THREE.Group>(null);
+  const materialRef = useRef<THREE.MeshStandardMaterial>(null);
   const geometry = useMemo(() => createStarGeometry(), []);
 
   useFrame((_, delta) => {
@@ -51,6 +55,8 @@ export const TopStar = () => {
     if (!group) return;
     group.rotation.y += delta * SPIN_SPEED;
     growWhenFormed(group, GROW_SPEED, delta);
+    const material = materialRef.current;
+    if (material) material.emissiveIntensity = STAR_GLOW * (1 + BEAT_BOOST * pulse(BASS_CHANNEL));
   });
 
   return (
@@ -59,6 +65,7 @@ export const TopStar = () => {
         <mesh geometry={geometry}>
           {/* Phát sáng > 1 để vượt ngưỡng Bloom (0.9) và toả quầng như đang cháy sáng */}
           <meshStandardMaterial
+            ref={materialRef}
             color={color}
             emissive={color}
             emissiveIntensity={STAR_GLOW}

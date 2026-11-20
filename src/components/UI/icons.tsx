@@ -32,3 +32,12 @@ export const CameraIcon = () => (
     <path d="m15.5 10.5 6-3.5v10l-6-3.5z" />
   </Icon>
 );
+
+/** Nốt nhạc: bật/tắt nhạc nền. */
+export const MusicIcon = () => (
+  <Icon>
+    <path d="M9 18V5.5l11-2.5v12.5" />
+    <circle cx="6.5" cy="18" r="2.5" />
+    <circle cx="17.5" cy="15.5" r="2.5" />
+  </Icon>
+);

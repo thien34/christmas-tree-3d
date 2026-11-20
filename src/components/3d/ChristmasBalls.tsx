@@ -6,10 +6,10 @@ import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
 import { randomAngle, randomInCube, randomRange } from '../../utils/random';
 import { sampleOrnamentPoint } from '../../utils/treePositions';
-import { createMorphingItems, moveTowardsState, useTreeTargets, type TreeTargetSampler } from './shared/motion';
+import { createMorphingItems, moveTowardsState } from './shared/motion';
 
 /*
- * 400 quả cầu vẽ bằng một InstancedMesh (1 draw call).
+ * Các quả cầu (số lượng trong CONFIG.counts.ornaments) vẽ bằng một InstancedMesh (1 draw call).
  * Lấp lánh = nhân màu instance lên > 1 để Bloom bắt sáng, kèm phóng to nhẹ và ngả sang ánh vàng.
  */
 
@@ -42,14 +42,13 @@ const createSparkle = (): Sparkle => {
 };
 
 const createBalls = (count: number) =>
-  createMorphingItems(count, () => {
-    return {
-      chaosPos: randomInCube(60),
-      scale: randomRange(RADIUS_RANGE.min, RADIUS_RANGE.max),
-      colorSeed: Math.random(),
-      sparkle: Math.random() < SPARKLE_CHANCE ? createSparkle() : null,
-    };
-  });
+  createMorphingItems(count, () => ({
+    chaosPos: randomInCube(60),
+    targetPos: sampleOrnamentPoint(),
+    scale: randomRange(RADIUS_RANGE.min, RADIUS_RANGE.max),
+    colorSeed: Math.random(),
+    sparkle: Math.random() < SPARKLE_CHANCE ? createSparkle() : null,
+  }));
 
 /** Độ lấp lánh 0–1 tại thời điểm `time`, hoặc 0 nếu đang trong lúc nghỉ. */
 const sparkleAmount = (sparkle: Sparkle, time: number) => {
@@ -57,8 +56,6 @@ const sparkleAmount = (sparkle: Sparkle, time: number) => {
   if (cycleTime >= sparkle.duration) return 0;
   return (Math.sin(time * sparkle.speed + sparkle.phase) + 1) / 2;
 };
-
-const sampleBallTarget: TreeTargetSampler = (style, _index, _count, out) => sampleOrnamentPoint(style, out);
 
 // Biến tạm dùng lại mỗi khung hình
 const matrix = new THREE.Matrix4();
@@ -76,7 +73,6 @@ export const ChristmasBalls = () => {
     () => balls.map((ball) => new THREE.Color(pickColor(themeColors.ornamentColors, ball.colorSeed))),
     [balls, themeColors.ornamentColors],
   );
-  useTreeTargets(balls, sampleBallTarget);
 
   useFrame(({ clock }, delta) => {
     const mesh = meshRef.current;

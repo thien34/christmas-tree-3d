@@ -6,10 +6,10 @@ import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
 import { randomRange } from '../../utils/random';
 import { sampleLightPoint, sampleShellPoint } from '../../utils/treePositions';
-import { createMorphingItems, moveTowardsState, useTreeTargets } from './shared/motion';
+import { createMorphingItems, moveTowardsState } from './shared/motion';
 
 /*
- * 400 bóng đèn vẽ bằng một InstancedMesh (1 draw call).
+ * Các bóng đèn (số lượng trong CONFIG.counts.lights) vẽ bằng một InstancedMesh (1 draw call).
  * Độ sáng được nhân thẳng vào màu từng instance; toneMapped={false} cho phép màu > 1 để Bloom bắt sáng.
  */
 
@@ -22,6 +22,7 @@ const MAX_GLOW = 4;
 const createLights = (count: number) =>
   createMorphingItems(count, () => ({
     chaosPos: sampleShellPoint(40),
+    targetPos: sampleLightPoint(),
     blinkSpeed: randomRange(2, 5),
     blinkOffset: Math.random() * 100,
     colorSeed: Math.random(),
@@ -41,7 +42,6 @@ export const FairyLights = () => {
     () => lights.map((light) => new THREE.Color(pickColor(themeColors.lights, light.colorSeed))),
     [lights, themeColors.lights],
   );
-  useTreeTargets(lights, sampleLightPoint);
 
   useFrame(({ clock }, delta) => {
     const mesh = meshRef.current;

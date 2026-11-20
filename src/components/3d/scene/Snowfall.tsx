@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { randomSpread } from '../../../utils/random';
@@ -29,13 +29,14 @@ const vertexShader = /* glsl */ `
 const fragmentShader = /* glsl */ `
   void main() {
     // Bông tuyết tròn, mờ dần ra mép
-    float fade = smoothstep(0.5, 0.1, distance(gl_PointCoord, vec2(0.5)));
+    float fade = 1.0 - smoothstep(0.1, 0.5, distance(gl_PointCoord, vec2(0.5)));
     gl_FragColor = vec4(vec3(0.8, 0.86, 1.0), fade * 0.7);
   }
 `;
 
 /** Tuyết rơi nhẹ quanh cảnh; chuyển động tính hoàn toàn trên GPU. */
 export const Snowfall = () => {
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
   const geometry = useMemo(() => {
     const positions = Float32Array.from({ length: FLAKE_COUNT * 3 }, (_, i) =>
       i % 3 === 1 ? Math.random() * AREA.height : randomSpread(AREA.width),
@@ -45,16 +46,20 @@ export const Snowfall = () => {
     flakes.setAttribute('aRandom', new THREE.BufferAttribute(Float32Array.from({ length: FLAKE_COUNT }, Math.random), 1));
     return flakes;
   }, []);
+  // Giá trị ban đầu; R3F chép chúng sang material nên mỗi khung hình phải cập nhật qua `materialRef`
   const uniforms = useMemo(() => ({ uTime: { value: 0 }, uHeight: { value: AREA.height }, uViewportHeight: { value: 1000 } }), []);
 
   useFrame(({ clock, size, viewport }) => {
-    uniforms.uTime.value = clock.elapsedTime;
-    uniforms.uViewportHeight.value = size.height * viewport.dpr;
+    const live = materialRef.current?.uniforms;
+    if (!live) return;
+    live.uTime.value = clock.elapsedTime;
+    live.uViewportHeight.value = size.height * viewport.dpr;
   });
 
   return (
     <points geometry={geometry} frustumCulled={false}>
       <shaderMaterial
+        ref={materialRef}
         uniforms={uniforms}
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}

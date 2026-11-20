@@ -1,11 +1,10 @@
 import { create } from 'zustand';
 import { THEME_ORDER, THEMES } from './constants/themes';
-import type { HandPosition, SceneState, ThemeType, TreeStyle } from './types';
+import type { HandPosition, SceneState, ThemeType } from './types';
 
 interface AppState {
   sceneState: SceneState;
   theme: ThemeType;
-  treeStyle: TreeStyle;
   /** Vị trí tay lúc bắt đầu chụm ngón cái + ngón trỏ (ảnh gần đó nhất được phóng to); null khi không chụm. */
   pinch: HandPosition | null;
   /** Ảnh người dùng thêm vào, dưới dạng object URL. */
@@ -22,7 +21,6 @@ interface AppState {
 export const useStore = create<AppState>(() => ({
   sceneState: 'CHAOS',
   theme: 'christmas',
-  treeStyle: 'classic',
   pinch: null,
   photoUrls: [],
   debugMode: false,

@@ -1,7 +1,6 @@
-import { useLayoutEffect } from 'react';
 import * as THREE from 'three';
 import { useStore } from '../../../store';
-import type { SceneState, TreeStyle } from '../../../types';
+import type { SceneState } from '../../../types';
 
 /** Một phần tử chuyển động qua lại giữa vị trí tán loạn (CHAOS) và vị trí trên cây (FORMED). */
 export interface MorphingItem {
@@ -27,32 +26,22 @@ export const spin = (rotation: THREE.Euler, speed: THREE.Vector3, delta: number)
   rotation.z += speed.z * delta;
 };
 
-/** Tạo `count` phần tử bắt đầu ở vị trí tán loạn. `targetPos` nếu không cho sẵn thì do `useTreeTargets` điền. */
-export const createMorphingItems = <T extends object>(
+/** Tạo `count` phần tử, mỗi phần tử bắt đầu ở vị trí tán loạn của nó. */
+export const createMorphingItems = <T extends Omit<MorphingItem, 'currentPos'>>(
   count: number,
-  create: (index: number) => T & { chaosPos: THREE.Vector3; targetPos?: THREE.Vector3 },
+  create: (index: number) => T,
 ): (T & MorphingItem)[] =>
   Array.from({ length: count }, (_, i) => {
     const item = create(i);
-    return { targetPos: new THREE.Vector3(), ...item, currentPos: item.chaosPos.clone() };
+    return { ...item, currentPos: item.chaosPos.clone() };
   });
 
 /** Phóng to dần lên kích thước thật khi cây thành hình, thu về 0 khi tán loạn (ngôi sao, thân cây). */
 export const growWhenFormed = (object: THREE.Object3D, speed: number, delta: number) => {
   const target = useStore.getState().sceneState === 'FORMED' ? 1 : 0;
-  object.scale.setScalar(THREE.MathUtils.damp(object.scale.x, target, speed, delta));
-};
-
-/** Hàm lấy mẫu vị trí trên cây cho phần tử thứ `index` trong tổng số `count`. */
-export type TreeTargetSampler = (style: TreeStyle, index: number, count: number, out: THREE.Vector3) => void;
-
-/**
- * Tính lại vị trí trên cây của từng phần tử mỗi khi đổi kiểu cây (cập nhật tại chỗ, không re-render).
- * `sample` phải là hàm ổn định (khai báo ngoài component), nếu không vị trí sẽ bị tính lại mỗi lần render.
- */
-export const useTreeTargets = (items: readonly MorphingItem[], sample: TreeTargetSampler) => {
-  const treeStyle = useStore((s) => s.treeStyle);
-  useLayoutEffect(() => {
-    items.forEach((item, i) => sample(treeStyle, i, items.length, item.targetPos));
-  }, [items, treeStyle, sample]);
+  const scale = THREE.MathUtils.damp(object.scale.x, target, speed, delta);
+  object.scale.setScalar(scale);
+  // Scale tiến sát 0 làm ma trận pháp tuyến gần suy biến (giá trị cực lớn trên GPU, dễ ra NaN qua Bloom);
+  // ẩn hẳn khi đã quá nhỏ để không còn thấy, đồng thời bớt được draw call
+  object.visible = scale > 1e-3;
 };

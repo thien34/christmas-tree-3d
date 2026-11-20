@@ -74,9 +74,8 @@ interface PhotoOrnamentProps {
 /** Một tấm ảnh: tự tải texture của mình nên thêm ảnh mới không ảnh hưởng tới các ảnh đã có. */
 const PhotoOrnament = ({ url, index, zoomedRef }: PhotoOrnamentProps) => {
   const texture = useTexture(url);
-  const treeStyle = useStore((s) => s.treeStyle);
   const photo = useMemo(createPhoto, []);
-  const spot = useMemo(() => sampleHangingSpot(treeStyle, index, CLEARANCE), [treeStyle, index]);
+  const spot = useMemo(() => sampleHangingSpot(index, CLEARANCE), [index]);
   const frameRef = useRef<THREE.Group>(null);
 
   useFrame(({ clock, camera }, delta) => {

@@ -2,9 +2,9 @@ export const CONFIG = {
   /** Kích thước tán cây; thân cây cao `trunkHeight` nối từ mặt đất lên gốc tán. */
   tree: { height: 26, radius: 11, trunkHeight: 2.5 },
   counts: {
-    foliage: 42_000,
-    ornaments: 150,
-    lights: 320,
+    foliage: 70_000,
+    ornaments: 70,
+    lights: 220,
     gifts: 34,
   },
   colors: {
@@ -16,11 +16,8 @@ export const CONFIG = {
   },
 } as const;
 
-/** Thời gian chờ giữa hai lần nhận cùng một cử chỉ, tránh đổi liên tục. */
-export const GESTURE_COOLDOWN_MS = {
-  thumbUp: 1500,
-  fingerCount: 800,
-} as const;
+/** Sau một lần giơ ngón cái (đổi theme), phải chờ chừng này mới nhận lần kế tiếp, tránh đổi liên tục. */
+export const THUMB_UP_COOLDOWN_MS = 1500;
 
 /** Độ tin cậy tối thiểu để chấp nhận một cử chỉ từ MediaPipe. */
 export const GESTURE_MIN_SCORE = 0.4;

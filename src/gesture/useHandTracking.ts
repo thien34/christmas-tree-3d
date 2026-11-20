@@ -1,9 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 import type { GestureRecognizer, GestureRecognizerResult } from '@mediapipe/tasks-vision';
-import { GESTURE_COOLDOWN_MS, GESTURE_MIN_SCORE } from '../constants/config';
+import { GESTURE_MIN_SCORE, THUMB_UP_COOLDOWN_MS } from '../constants/config';
 import { cycleTheme, setStatus, useStore } from '../store';
-import type { FingerCount, TreeStyle } from '../types';
-import { countFingers, detectPinch } from './handGestures';
+import { detectPinch } from './handGestures';
 
 /** Phiên bản file WASM phải khớp với phiên bản thư viện; Vite điền sẵn từ package.json (xem vite.config.ts). */
 const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIAPIPE_VERSION__}/wasm`;
@@ -20,18 +19,15 @@ const CAMERA_ERRORS: Record<string, string> = {
 const describeError = (error: unknown) =>
   `ERROR: ${error instanceof Error ? (CAMERA_ERRORS[error.name] ?? error.message) : 'Hand tracking failed'}`;
 
-const STYLE_BY_FINGER_COUNT: Record<FingerCount, TreeStyle> = { 1: 'classic', 2: 'tiered', 3: 'spiral' };
-
 /**
  * Tạo hàm chuyển kết quả nhận diện của từng khung hình thành thay đổi trong store:
- * xoè tay → CHAOS, nắm tay → FORMED, giơ ngón cái → đổi theme, 1–3 ngón → đổi kiểu cây, chụm tay → phóng to ảnh.
+ * xoè tay → CHAOS, nắm tay → FORMED, giơ ngón cái → đổi theme, chụm tay → phóng to ảnh.
  */
 const createGestureHandler = () => {
   let lastThumbUp = 0;
-  let lastStyleChange = 0;
 
   return (result: GestureRecognizerResult, now: number) => {
-    const { pinch: activePinch, treeStyle, debugMode } = useStore.getState();
+    const { pinch: activePinch, debugMode } = useStore.getState();
     const landmarks = result.landmarks[0];
     const gesture = result.gestures[0]?.[0];
     const isConfident = gesture !== undefined && gesture.score > GESTURE_MIN_SCORE;
@@ -45,16 +41,9 @@ const createGestureHandler = () => {
       if (name === 'Open_Palm') useStore.setState({ sceneState: 'CHAOS' });
       if (name === 'Closed_Fist') useStore.setState({ sceneState: 'FORMED' });
 
-      if (name === 'Thumb_Up' && now - lastThumbUp > GESTURE_COOLDOWN_MS.thumbUp) {
+      if (name === 'Thumb_Up' && now - lastThumbUp > THUMB_UP_COOLDOWN_MS) {
         lastThumbUp = now;
         cycleTheme();
-      }
-
-      const fingers = countFingers(name, landmarks);
-      const style = fingers && STYLE_BY_FINGER_COUNT[fingers];
-      if (style && style !== treeStyle && now - lastStyleChange > GESTURE_COOLDOWN_MS.fingerCount) {
-        lastStyleChange = now;
-        useStore.setState({ treeStyle: style });
       }
     }
 
@@ -85,6 +74,7 @@ export const useHandTracking = (
     let recognizer: GestureRecognizer | null = null;
     let stream: MediaStream | null = null;
     let frameId = 0;
+    let frameErrorLogged = false;
     const stopCamera = () => stream?.getTracks().forEach((track) => track.stop());
 
     const start = async () => {
@@ -116,7 +106,16 @@ export const useHandTracking = (
       const drawingUtils = new vision.DrawingUtils(ctx);
 
       const onVideoFrame: VideoFrameRequestCallback = (now) => {
-        const result = model.recognizeForVideo(video, now);
+        frameId = video.requestVideoFrameCallback(onVideoFrame);
+        let result: GestureRecognizerResult;
+        try {
+          result = model.recognizeForVideo(video, now);
+        } catch (error) {
+          // Một khung hình lỗi (vd. video đổi kích thước) thì bỏ qua; chỉ báo một lần để không spam console
+          if (!frameErrorLogged) console.error('Hand tracking frame error:', error);
+          frameErrorLogged = true;
+          return;
+        }
         handleGestures(result, now);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -126,7 +125,6 @@ export const useHandTracking = (
             drawingUtils.drawLandmarks(landmarks, { lineWidth: 1 });
           }
         }
-        frameId = video.requestVideoFrameCallback(onVideoFrame);
       };
       frameId = video.requestVideoFrameCallback(onVideoFrame);
     };

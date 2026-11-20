@@ -1,8 +1,6 @@
 /** CHAOS: các phần tử bay tán loạn. FORMED: các phần tử tụ lại thành cây thông. */
 export type SceneState = 'CHAOS' | 'FORMED';
 
-export type TreeStyle = 'classic' | 'tiered' | 'spiral';
-
 export type ThemeType = 'christmas' | 'pink' | 'purple' | 'blue';
 
 export interface ThemeColors {
@@ -23,5 +21,3 @@ export interface HandPosition {
   x: number;
   y: number;
 }
-
-export type FingerCount = 1 | 2 | 3;

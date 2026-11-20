@@ -16,6 +16,17 @@ const CAMERA_ERRORS: Record<string, string> = {
   OverconstrainedError: 'Camera constraints not met',
 };
 
+/**
+ * Số liệu đo của vòng nhận diện tay, cho bảng chỉ số ở chế độ debug đọc định kỳ.
+ * Để ngoài store vì cập nhật mỗi khung hình camera; đưa vào store sẽ làm React render lại liên tục.
+ */
+export const trackingStats = {
+  /** Tổng số khung hình camera đã nhận diện (bảng chỉ số tự lấy hiệu để ra FPS). */
+  frames: 0,
+  /** Thời gian chạy model cho khung hình gần nhất (ms). */
+  inferenceMs: 0,
+};
+
 const describeError = (error: unknown) =>
   `ERROR: ${error instanceof Error ? (CAMERA_ERRORS[error.name] ?? error.message) : 'Hand tracking failed'}`;
 
@@ -109,7 +120,10 @@ export const useHandTracking = (
         frameId = video.requestVideoFrameCallback(onVideoFrame);
         let result: GestureRecognizerResult;
         try {
+          const startedAt = performance.now();
           result = model.recognizeForVideo(video, now);
+          trackingStats.inferenceMs = performance.now() - startedAt;
+          trackingStats.frames++;
         } catch (error) {
           // Một khung hình lỗi (vd. video đổi kích thước) thì bỏ qua; chỉ báo một lần để không spam console
           if (!frameErrorLogged) console.error('Hand tracking frame error:', error);

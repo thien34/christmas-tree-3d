@@ -138,35 +138,116 @@ body,
   background: var(--error);
 }
 
-/* ---------- Camera preview (debug) ---------- */
+/* ---------- Camera dock (debug) ---------- */
 
-/* Video và canvas phải luôn được render để MediaPipe đọc khung hình, nên chỉ thu nhỏ/ẩn đi thay vì bỏ khỏi DOM. */
-.camera-preview {
+/*
+ * Video và canvas phải luôn được render để MediaPipe đọc khung hình, nên khi tắt debug chỉ thu nhỏ/ẩn khung đi
+ * thay vì bỏ khỏi DOM. Khi bật: khung 16:9 kèm bảng chỉ số; vị trí (left/top) do useCornerDock tính.
+ */
+.camera-dock {
   position: fixed;
   top: 0;
-  right: 0;
+  left: 0;
   z-index: -1;
   width: 1px;
   height: 1px;
+  overflow: hidden;
   opacity: 0;
   pointer-events: none;
-  transform: scaleX(-1); /* soi gương cho dễ nhìn */
 }
 
-.camera-preview.is-visible {
+.camera-dock.is-visible {
   z-index: 100;
   width: 200px;
   height: auto;
-  max-height: 150px;
-  border-radius: 8px;
-}
-
-video.camera-preview.is-visible {
-  opacity: 0.6;
   border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  background: rgba(8, 12, 24, 0.3);
+  opacity: 1;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none; /* kéo bằng tay trên màn hình cảm ứng không cuộn trang */
+  user-select: none;
 }
 
-canvas.camera-preview.is-visible {
-  z-index: 101;
-  opacity: 1;
+/* Đang kéo: đi theo con trỏ ngay, không trễ */
+.camera-dock.is-dragging {
+  cursor: grabbing;
+}
+
+/* Vừa thả: trượt về góc gần nhất (thời gian khớp với SNAP_MS trong useCornerDock) */
+.camera-dock.is-snapping {
+  transition:
+    left 0.25s ease,
+    top 0.25s ease;
+}
+
+.camera-dock__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+/*
+ * Video và canvas khung xương cùng phủ kín khung 16:9 với object-fit: cover, nên được cắt giống hệt nhau
+ * và khung xương luôn nằm khớp trên bàn tay. Soi gương cho dễ nhìn.
+ */
+.camera-dock__video,
+.camera-dock__overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  pointer-events: none;
+}
+
+.camera-dock__video {
+  opacity: 0.6;
+}
+
+/* ---------- Stats panel ---------- */
+
+/* Nằm đè lên phần dưới hình camera; nền tối dần xuống dưới và chữ có bóng để đọc được trên mọi hình */
+.stats-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 14px 6px 3px;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.6));
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 10px;
+  line-height: 1.35;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-panel div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stats-panel dt {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.stats-panel dd {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  white-space: nowrap;
+}
+
+.stats-panel .is-warn {
+  color: var(--accent);
+}
+
+.stats-panel .is-bad {
+  color: var(--error);
 }

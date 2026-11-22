@@ -1,10 +1,10 @@
 # Cây thông Noel 3D
 
-Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng bay về tụ lại thành cây giữa trời đêm tuyết rơi, quà xếp quanh gốc. Bạn có thể đổi bảng màu, treo ảnh của mình lên cây như ảnh Polaroid, bật nhạc Jingle Bells cho đèn nháy theo nhịp, bắn pháo hoa và gửi lời chúc có tên người nhận.
+Cây thông Noel 3D chạy trên trình duyệt, điều khiển bằng **cử chỉ tay qua webcam**. Xoè tay thì lá cây, quả cầu, hộp quà, bóng đèn bay tán loạn khắp không gian; nắm tay thì chúng xoáy về tụ lại thành cây, ngôi sao trên ngọn loé sáng toả một vòng hạt lấp lánh, giữa trời đêm có trăng, cực quang và sao băng, quà xếp quanh gốc. Bạn có thể đổi bảng màu, treo ảnh của mình lên cây như ảnh Polaroid, bật nhạc Jingle Bells cho đèn nháy theo nhịp, bắn pháo hoa và gửi lời chúc có tên người nhận.
 
 | Xoè tay: tán loạn | Nắm tay: thành cây |
 | --- | --- |
-| <img src="docs/tree-chaos.jpg" alt="Lá cây, quả cầu và hộp quà bay tán loạn" width="400" /> | <img src="docs/tree-formed.jpg" alt="Cây thông đã tụ lại thành hình, quà xếp quanh gốc" width="400" /> |
+| <img src="docs/tree-chaos.jpg" alt="Lá cây, quả cầu, hộp quà bay tán loạn dưới dải cực quang" width="400" /> | <img src="docs/tree-formed.jpg" alt="Cây thông đã thành hình với kim tuyến và ngôi sao sáng, quà xếp quanh gốc" width="400" /> |
 
 ## Cách chạy
 
@@ -58,10 +58,10 @@ Lần đầu mở trang cần Internet để tải model nhận diện tay, nên
 | Cử chỉ | Kết quả |
 | --- | --- |
 | ✋ Xoè tay | Lá cây và đồ trang trí bay tán loạn |
-| ✊ Nắm tay | Tụ lại thành cây, hộp quà xếp quanh gốc |
+| ✊ Nắm tay | Xoáy về tụ lại thành cây, ngôi sao loé sáng, camera nhích lại gần; hộp quà xếp quanh gốc |
 | 👍 Giơ ngón cái | Đổi bảng màu: Giáng sinh (xanh thông, đỏ, vàng) → hồng phấn → tím → xanh băng |
 | ✌️ Giơ hai ngón | Bắn một loạt pháo hoa; giữ nguyên thì cứ 1,5 giây bắn thêm một loạt |
-| 🤏 Chụm ngón cái và ngón trỏ | Phóng to một tấm ảnh; thả tay để ảnh về chỗ cũ. Mỗi lần chụm lại ra một tấm khác |
+| 🤏 Chụm ngón cái và ngón trỏ | Phóng to một tấm ảnh (hậu cảnh mờ đi); thả tay để ảnh về chỗ cũ. Mỗi lần chụm lại ra một tấm khác. Tay gần hay xa camera đều nhận như nhau |
 
 **Gửi lời chúc:** thêm `?to=` và tên người nhận vào cuối đường link, ví dụ `http://localhost:5173/?to=Lan`. Khi cây thành hình, dòng chữ "Merry Christmas, Lan" sẽ hiện lên từng chữ. Không có `?to=` thì chỉ hiện "Merry Christmas".
 
@@ -86,25 +86,26 @@ Thư viện nhận diện tay `@mediapipe/tasks-vision` (từ bản 1.x) tự g�
 
 Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông qua **React Three Fiber** (dùng React để mô tả cảnh 3D), build bằng Vite 8.
 
-- **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây (hộp quà thì là một chỗ trên mặt đất quanh gốc). Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm.
-- **70.000 lá kim chạy trên GPU:** lá mọc dọc theo 230 cành, mỗi cành xoè ra như một cái quạt có các nhánh con chĩa chéo kiểu xương cá, nên tán cây có cành, có khe hở như cây thật. Cả hai vị trí của từng lá được nạp sẵn vào card đồ hoạ, *shader* (chương trình nhỏ chạy trên GPU, viết bằng GLSL) tự trộn giữa hai vị trí, vẽ mỗi hạt thành một lá kim và tô tối ở trong tán, sáng ở đầu cành.
-- **Instancing:** 70 quả cầu, 34 hộp quà và 220 bóng đèn được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*).
-- **Ảnh Polaroid:** mỗi ảnh có một chỗ treo cố định bên ngoài tán lá, mặt hướng ra ngoài; ảnh không vuông được cắt lấy phần giữa cho vừa khung. Mỗi lần chụm tay phóng to một ảnh chưa xem.
-- **Khung cảnh:** nền trời đêm chuyển màu, nền tuyết hắt sáng quanh gốc có bụi tuyết lấp lánh, và tuyết rơi (cũng chạy trên GPU).
-- **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay (khoảng cách đầu ngón cái và ngón trỏ).
+- **Hai trạng thái CHAOS / FORMED:** mỗi món trang trí nhớ hai vị trí, một chỗ ngẫu nhiên trong không gian và một chỗ trên cây (hộp quà thì là một chỗ trên mặt đất quanh gốc). Mỗi khung hình, nó tiến dần về vị trí đích bằng *damping* (càng gần đích càng chậm lại), nên chuyển cảnh luôn mượt dù máy nhanh hay chậm. Khi tụ về cây, mọi thứ còn xoáy quanh thân cây nên bay theo đường xoắn ốc.
+- **Khoảnh khắc thành hình:** lúc cây vừa tụ đủ, ngôi sao loé sáng kèm quầng sáng, một vòng hạt toả ra từ ngọn, nền tuyết ửng sáng và camera nhích lại gần rồi lùi về. Mở trang, camera lượn từ trên cao xuống như cảnh mở đầu phim; chạm chuột là dừng.
+- **70.000 lá kim chạy trên GPU:** lá mọc dọc theo 230 cành, mỗi cành xoè ra như một cái quạt có các nhánh con chĩa chéo kiểu xương cá, nên tán cây có cành, có khe hở như cây thật. Cả hai vị trí của từng lá được nạp sẵn vào card đồ hoạ, *shader* (chương trình nhỏ chạy trên GPU, viết bằng GLSL) tự trộn giữa hai vị trí, vẽ mỗi hạt thành một lá kim và tô tối ở trong tán, sáng ở đầu cành. Lá quanh mỗi bóng đèn còn ửng theo màu đèn (màu đèn được ghi vào một texture nhỏ mỗi khung hình để shader đọc).
+- **Instancing:** 70 quả cầu, 34 hộp quà (kèm bóng đổ mềm), 220 bóng đèn, cùng gậy kẹo, chuông, sao nhỏ và dây kim tuyến quấn quanh cây đều được vẽ bằng *InstancedMesh*, tức vẽ hàng trăm bản sao của cùng một hình chỉ trong một lần gọi GPU (*draw call*).
+- **Ảnh Polaroid:** mỗi ảnh có một chỗ treo cố định bên ngoài tán lá, mặt hướng ra ngoài, treo bằng một sợi dây vàng; ảnh không vuông được cắt lấy phần giữa cho vừa khung. Mỗi lần chụm tay phóng to một ảnh chưa xem.
+- **Khung cảnh:** bầu trời đêm chuyển màu theo theme, mặt trăng, dải cực quang uốn lượn, sao băng thỉnh thoảng vụt qua, đồi tuyết phía xa, nền tuyết hắt sáng quanh gốc có bụi tuyết lấp lánh, tuyết rơi (cũng chạy trên GPU) và vài bông tuyết nhoè sát ống kính. Đổi theme thì màu trời, đất, cực quang chuyển dần chứ không đổi phắt.
+- **Nhận diện cử chỉ:** MediaPipe Gesture Recognizer chạy ngay trong trình duyệt bằng *WebAssembly* (mã biên dịch chạy gần nhanh như ứng dụng cài trên máy). Nó trả về 21 điểm mốc trên bàn tay; app tự tính thêm cử chỉ chụm tay theo tỉ lệ khoảng cách đầu ngón cái – ngón trỏ so với cỡ lòng bàn tay, có hai ngưỡng vào/ra và lọc vài khung hình hụt để ảnh không nhảy khi tay run.
 - **Nhạc tự tổng hợp:** không dùng file nhạc; "Jingle Bells" (bài hát năm 1857, đã thuộc phạm vi công cộng) được chơi bằng Web Audio, gồm tiếng chuông cho giai điệu, bè trầm và tiếng lục lạc. App tự lên lịch từng nốt nên biết chính xác lúc nốt vang lên, đèn trên cây nháy khớp với tai nghe.
 - **Pháo hoa trên GPU:** mỗi quả là vài trăm hạt; chỉ ghi vị trí, vận tốc, màu một lần lúc bắn, còn đường bay lên, nổ tung, rơi và tắt dần đều do shader tính.
-- **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao) nhưng bỏ qua ảnh Polaroid; *Vignette* làm tối dần về các góc màn hình; *tone mapping* nén vùng quá sáng lại để không bị cháy trắng.
+- **Hậu kỳ:** *Bloom* làm các vùng sáng toả quầng ra xung quanh (đèn, ngôi sao) nhưng bỏ qua ảnh Polaroid; *Depth of field* làm mờ hậu cảnh khi đang phóng to ảnh; *Vignette* làm tối dần về các góc màn hình; *tone mapping* nén vùng quá sáng lại để không bị cháy trắng; một lớp hạt nhiễu rất nhẹ xoá các dải sọc màu ở vùng trời tối.
 
 **Muốn chỉnh?**
 
 | Muốn đổi | Sửa ở |
 | --- | --- |
-| Số lá, quả cầu, đèn, hộp quà; kích thước cây | `src/constants/config.ts` |
-| Bảng màu các theme | `src/constants/themes.ts` |
+| Số lá, quả cầu, đèn, hộp quà, gậy kẹo, chuông, sao nhỏ; kích thước cây | `src/constants/config.ts` |
+| Bảng màu các theme (gồm màu trời, nền tuyết, cực quang) | `src/constants/themes.ts` |
 | Dáng cây (số cành, cách xếp cành, độ rủ) | `src/utils/treePositions.ts` |
 | Hình dáng và màu của lá | `src/shaders/FoliageMaterial.ts` |
-| Nền trời, tuyết rơi, độ sáng và Bloom | `src/components/3d/scene/` |
+| Nền trời, trăng, cực quang, sao băng, tuyết rơi, camera, độ sáng và Bloom | `src/components/3d/scene/` |
 | Kích thước, độ sáng của ảnh Polaroid | `src/components/3d/photos/` |
 | Ngưỡng nhận diện cử chỉ | `src/gesture/handGestures.ts` |
 | Bài nhạc, nhịp độ, âm lượng | `src/audio/jingleBells.ts`, `src/audio/music.ts` |
@@ -116,10 +117,10 @@ Viết bằng React 19 + TypeScript 7, dựng cảnh 3D bằng Three.js thông q
 src/
 ├── App.tsx                 # Ghép mọi thứ lại: cảnh 3D, nhận diện tay, thanh nút
 ├── components/
-│   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đèn, hộp quà, ngôi sao, thân cây, ảnh
+│   ├── 3d/                 # Cảnh 3D: lá, quả cầu, đồ trang trí, kim tuyến, đèn, hộp quà, ngôi sao, thân cây, ảnh
 │   │   ├── photos/         # Ảnh Polaroid: treo lên cây, chọn ảnh để phóng to
-│   │   ├── scene/          # Camera, ánh sáng, nền trời, tuyết rơi, pháo hoa, hậu kỳ
-│   │   └── shared/         # Chuyển động tán loạn ↔ thành cây dùng chung
+│   │   ├── scene/          # Camera, ánh sáng, bầu trời, trăng, cực quang, đồi, tuyết, pháo hoa, hậu kỳ
+│   │   └── shared/         # Chuyển động tán loạn ↔ thành cây, thời điểm thành hình, ánh đèn hắt lên lá
 │   ├── UI/                 # Các nút, lời chúc, bảng chỉ số, icon, dòng trạng thái
 │   └── GestureController.tsx
 ├── audio/                  # Nhạc nền tự tổng hợp (Web Audio) + nhịp cho đèn nháy

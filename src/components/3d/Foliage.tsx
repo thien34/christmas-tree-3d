@@ -7,6 +7,7 @@ import '../../shaders/FoliageMaterial'; // đăng ký thẻ <foliageMaterial />
 import type { FoliageMaterialImpl } from '../../shaders/FoliageMaterial';
 import { useStore, useThemeColors } from '../../store';
 import { sampleFoliagePoint } from '../../utils/treePositions';
+import { createNearestLightFinder, GLOW_REACH, LIGHT_GLOW_TEXTURE } from './shared/lightGlow';
 import { damping } from './shared/motion';
 
 const CHAOS_RADIUS = 42;
@@ -20,17 +21,22 @@ const COLOR_SPEED = 2;
  */
 const createFoliageGeometry = (count: number) => {
   const onTree = new Float32Array(count * 4);
+  /** Bóng đèn gần nhất của từng lá: [chỉ số, khoảng cách]. */
+  const nearestLight = new Float32Array(count * 2);
+  const findNearestLight = createNearestLightFinder();
   const point = new THREE.Vector3();
   for (let i = 0; i < count; i++) {
     // Ghi thẳng vào mảng thay vì `onTree.set([...])`: tránh tạo 70.000 mảng tạm lúc khởi động
     onTree[i * 4 + 3] = sampleFoliagePoint(point);
     point.toArray(onTree, i * 4);
+    findNearestLight(point.x, point.y, point.z, nearestLight, i * 2);
   }
 
   const geometry = new THREE.BufferGeometry();
   const chaos = inSphere(new Float32Array(count * 3), { radius: CHAOS_RADIUS });
   geometry.setAttribute('position', new THREE.BufferAttribute(chaos, 3));
   geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(onTree, 4));
+  geometry.setAttribute('aLight', new THREE.BufferAttribute(nearestLight, 2));
   geometry.setAttribute('aRandom', new THREE.BufferAttribute(Float32Array.from({ length: count }, Math.random), 1));
   return geometry;
 };
@@ -54,7 +60,7 @@ export const Foliage = () => {
 
   return (
     <points geometry={geometry}>
-      <foliageMaterial ref={materialRef} />
+      <foliageMaterial ref={materialRef} uLightGlow={LIGHT_GLOW_TEXTURE} uGlowReach={GLOW_REACH} />
     </points>
   );
 };

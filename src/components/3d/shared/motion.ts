@@ -15,9 +15,23 @@ export interface MorphingItem {
  */
 export const damping = (speed: number, delta: number) => 1 - Math.exp(-speed * delta);
 
-/** Đưa `currentPos` tiến dần về vị trí ứng với trạng thái cảnh hiện tại. */
-export const moveTowardsState = (item: MorphingItem, state: SceneState, speed: number, delta: number) =>
-  item.currentPos.lerp(state === 'FORMED' ? item.targetPos : item.chaosPos, damping(speed, delta));
+/** Tốc độ xoáy tối đa (rad/giây) khi bay về cây, và khoảng cách mà từ đó trở lên thì xoáy hết tốc độ. */
+const SWIRL = { speed: 0.6, fullAt: 15 };
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+/**
+ * Đưa `currentPos` tiến dần về vị trí ứng với trạng thái cảnh hiện tại.
+ * Khi tụ về cây, phần tử còn xoáy quanh thân cây (giống lá, xem FoliageMaterial) nên bay theo đường xoắn ốc;
+ * xoáy chậm dần khi tới gần nên vẫn dừng đúng chỗ.
+ */
+export const moveTowardsState = (item: MorphingItem, state: SceneState, speed: number, delta: number) => {
+  const isFormed = state === 'FORMED';
+  const target = isFormed ? item.targetPos : item.chaosPos;
+  item.currentPos.lerp(target, damping(speed, delta));
+  if (!isFormed) return item.currentPos;
+  const remaining = item.currentPos.distanceTo(target);
+  return item.currentPos.applyAxisAngle(Y_AXIS, SWIRL.speed * delta * Math.min(1, remaining / SWIRL.fullAt));
+};
 
 /** Xoay đối tượng theo vận tốc góc (rad/giây) trên từng trục. */
 export const spin = (rotation: THREE.Euler, speed: THREE.Vector3, delta: number) => {

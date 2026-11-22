@@ -8,6 +8,9 @@ import { THEMES } from '../constants/themes';
  * - `position`: vị trí tán loạn (CHAOS); `aTargetPos`: vị trí trên cây (FORMED) kèm độ sáng của hạt ở thành phần w.
  * - `uProgress` 0 → 1 nội suy giữa hai vị trí (có easing), kèm dao động nhẹ theo `uTime`.
  * - Màu: từ tông tối (lá khuất bên trong, dưới tầng tán khác) tới tông sáng (đầu cành lộ ra ngoài) của `uColor`.
+ * - `aLight`: bóng đèn gần nhất (chỉ số, khoảng cách); lá ửng màu của bóng đó, đọc từ `uLightGlow` (xem lightGlow.ts).
+ * - `uFrost`: một phần đầu cành phủ tuyết trắng.
+ * - Lúc chuyển trạng thái, lá bay theo đường xoắn ốc quanh thân cây thay vì đi thẳng.
  */
 export const FoliageMaterial = shaderMaterial(
   {
@@ -18,16 +21,26 @@ export const FoliageMaterial = shaderMaterial(
     uLeafSize: 0.45,
     /** Chiều cao vùng vẽ tính bằng pixel thật, để lá giữ đúng kích thước trên mọi màn hình. */
     uViewportHeight: 1000,
+    /** Màu × độ sáng hiện tại của từng bóng đèn (1 hàng texel). */
+    uLightGlow: null as THREE.Texture | null,
+    /** Lá cách bóng đèn xa hơn khoảng này thì không ửng sáng. */
+    uGlowReach: 2.6,
+    /** Độ phủ tuyết ở đầu cành, 0 = không có. */
+    uFrost: 0.4,
   },
   /* glsl */ `
     uniform float uTime;
     uniform float uProgress;
     uniform float uLeafSize;
     uniform float uViewportHeight;
+    uniform sampler2D uLightGlow;
+    uniform float uGlowReach;
     attribute vec4 aTargetPos;
     attribute float aRandom;
+    attribute vec2 aLight;
     varying float vShade;
     varying float vRandom;
+    varying vec3 vGlow;
 
     float cubicInOut(float t) {
       float f = 2.0 * t - 2.0;
@@ -43,6 +56,18 @@ export const FoliageMaterial = shaderMaterial(
 
       float t = cubicInOut(uProgress);
       vec3 finalPos = mix(position, aTargetPos.xyz + sway, t);
+      // Xoắn quanh trục thân cây giữa chừng chuyển động (bằng 0 ở hai đầu nên vị trí cuối không đổi)
+      float swirl = sin(t * 3.14159265) * (1.6 + 1.2 * aRandom);
+      float cs = cos(swirl);
+      float sn = sin(swirl);
+      finalPos.xz = mat2(cs, sn, -sn, cs) * finalPos.xz;
+
+      // Ánh đèn gần nhất: sáng nhất sát bóng, tắt hẳn ở uGlowReach; chỉ có khi đã thành cây
+      vGlow = vec3(0.0);
+      if (aLight.x >= 0.0) {
+        float falloff = 1.0 - smoothstep(0.0, uGlowReach, aLight.y);
+        vGlow = texelFetch(uLightGlow, ivec2(int(aLight.x), 0), 0).rgb * falloff * falloff * t;
+      }
 
       vShade = mix(0.6, aTargetPos.w, t);
       vRandom = aRandom;
@@ -61,8 +86,10 @@ export const FoliageMaterial = shaderMaterial(
   `,
   /* glsl */ `
     uniform vec3 uColor;
+    uniform float uFrost;
     varying float vShade;
     varying float vRandom;
+    varying vec3 vGlow;
 
     void main() {
       // Mỗi hạt là một lá kim: nét mảnh nằm theo một hướng ngẫu nhiên
@@ -80,6 +107,11 @@ export const FoliageMaterial = shaderMaterial(
       color += vec3(0.06, 0.08, 0.0) * smoothstep(0.7, 1.0, vShade);
       color *= 0.75 + 0.5 * fract(vRandom * 7.31); // mỗi lá đậm nhạt khác nhau một chút
       color *= 0.85 + 0.3 * (along.x + 0.5); // sáng dần về phía đầu lá
+      // Tuyết đọng: chỉ một phần lá ở đầu cành, lá càng lộ ra ngoài càng trắng
+      float frost = uFrost * step(0.62, fract(vRandom * 13.7)) * smoothstep(0.72, 1.0, vShade);
+      color = mix(color, vec3(0.62, 0.68, 0.78), frost);
+      // Ánh đèn hắt lên lá; kẹp lại để lá không sáng vượt bóng đèn (Bloom sẽ loé cả mảng)
+      color += min(vGlow * 0.11, vec3(0.6));
       gl_FragColor = vec4(color, 1.0);
     }
   `,

@@ -6,7 +6,8 @@ import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
 import { randomRange } from '../../utils/random';
-import { sampleLightPoint, sampleShellPoint } from '../../utils/treePositions';
+import { sampleShellPoint } from '../../utils/treePositions';
+import { LIGHT_GLOW_DATA, LIGHT_GLOW_TEXTURE, LIGHT_POSITIONS } from './shared/lightGlow';
 import { createMorphingItems, moveTowardsState } from './shared/motion';
 
 /*
@@ -28,9 +29,10 @@ const MUSIC_REST_GLOW = 0.5;
 const MUSIC_PEAK_GLOW = 5;
 
 const createLights = (count: number) =>
-  createMorphingItems(count, () => ({
+  createMorphingItems(count, (index) => ({
     chaosPos: sampleShellPoint(40),
-    targetPos: sampleLightPoint(),
+    // Vị trí dùng chung với lá cây, để lá quanh bóng ửng theo màu đèn (xem shared/lightGlow.ts)
+    targetPos: LIGHT_POSITIONS[index].clone(),
     blinkSpeed: randomRange(2, 5),
     blinkOffset: Math.random() * 100,
     colorSeed: Math.random(),
@@ -75,7 +77,9 @@ export const FairyLights = () => {
         glow = isFormed ? THREE.MathUtils.lerp(MIN_GLOW, MAX_GLOW, blink) : 1;
       }
       mesh.setColorAt(i, color.copy(baseColors[i]).multiplyScalar(glow));
+      color.toArray(LIGHT_GLOW_DATA, i * 4);
     });
+    LIGHT_GLOW_TEXTURE.needsUpdate = true;
 
     mesh.instanceMatrix.needsUpdate = true;
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;

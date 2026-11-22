@@ -5,7 +5,9 @@ import * as THREE from 'three';
 import { BASS_CHANNEL, pulse } from '../../audio/music';
 import { CONFIG } from '../../constants/config';
 import { useThemeColors } from '../../store';
+import { burstAge } from './shared/formation';
 import { growWhenFormed } from './shared/motion';
+import { StarHalo } from './StarHalo';
 
 const SPIN_SPEED = 0.5;
 const GROW_SPEED = 3;
@@ -20,7 +22,7 @@ const STAR_GLOW = 2.2;
 const BEAT_BOOST = 0.6;
 
 /** Hình ngôi sao `points` cánh, bán kính đỉnh ngoài `outer` và đỉnh trong `inner`. */
-const createStarShape = (points = 5, outer = 1.3, inner = 0.7) => {
+export const createStarShape = (points = 5, outer = 1.3, inner = 0.7) => {
   const shape = new THREE.Shape();
   for (let i = 0; i < points * 2; i++) {
     const radius = i % 2 === 0 ? outer : inner;
@@ -56,7 +58,9 @@ export const TopStar = () => {
     group.rotation.y += delta * SPIN_SPEED;
     growWhenFormed(group, GROW_SPEED, delta);
     const material = materialRef.current;
-    if (material) material.emissiveIntensity = STAR_GLOW * (1 + BEAT_BOOST * pulse(BASS_CHANNEL));
+    const age = burstAge();
+    const flash = age >= 0 ? Math.exp(-age * 2) : 0;
+    if (material) material.emissiveIntensity = STAR_GLOW * (1 + BEAT_BOOST * pulse(BASS_CHANNEL) + 1.5 * flash);
   });
 
   return (
@@ -74,6 +78,7 @@ export const TopStar = () => {
           />
         </mesh>
       </Float>
+      <StarHalo color={color} />
     </group>
   );
 };

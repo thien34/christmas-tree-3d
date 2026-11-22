@@ -8,7 +8,7 @@ import { randomEuler, randomItem, randomRange, randomRotationSpeed, randomSpread
 import { sampleHangingSpot, sampleShellPoint } from '../../../utils/treePositions';
 import { damping, spin } from '../shared/motion';
 import { pickNearestOnScreen } from './pickPhotoOnScreen';
-import { PolaroidFrame } from './PolaroidFrame';
+import { HANGER_NAME, PolaroidFrame } from './PolaroidFrame';
 
 const CHAOS_RADIUS = 50;
 /** Ảnh treo cách mặt cây chừng này, vừa đủ nằm ngoài lớp quả cầu và hộp quà. */
@@ -83,6 +83,9 @@ const PhotoOrnament = ({ url, index, zoomedRef }: PhotoOrnamentProps) => {
     if (!frame) return;
     const isFormed = useStore.getState().sceneState === 'FORMED';
     const isZoomed = frame === zoomedRef.current;
+    const hanger = frame.getObjectByName(HANGER_NAME);
+    // Chỉ hiện dây khi ảnh đã treo vào chỗ (không hiện lúc đang bay về cây)
+    if (hanger) hanger.visible = isFormed && !isZoomed && frame.position.distanceToSquared(spot.position) < 0.25;
 
     const scale = isZoomed ? Math.min(photo.scale * ZOOM.scale, ZOOM.maxSize) : photo.scale;
     frame.scale.setScalar(THREE.MathUtils.damp(frame.scale.x, scale, ZOOM.scaleSpeed, delta));

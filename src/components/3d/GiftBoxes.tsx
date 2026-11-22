@@ -5,8 +5,9 @@ import { CONFIG } from '../../constants/config';
 import { pickColor } from '../../constants/themes';
 import { useStore, useThemeColors } from '../../store';
 import { randomAngle, randomEuler, randomInCube, randomRange, randomRotationSpeed } from '../../utils/random';
-import { sampleGiftSpot } from '../../utils/treePositions';
+import { GROUND_Y, sampleGiftSpot } from '../../utils/treePositions';
 import { createMorphingItems, moveTowardsState, spin } from './shared/motion';
+import { SOFT_SPOT_TEXTURE } from './shared/softSpot';
 
 /*
  * Hộp quà: bay lượn khi tán loạn, xếp ngay ngắn trên mặt đất quanh gốc cây khi cây thành hình.
@@ -23,6 +24,10 @@ const Y_AXIS = new THREE.Vector3(0, 1, 0);
 const Z_AXIS = new THREE.Vector3(0, 0, 1);
 /** Khối hộp 1×1×1 dùng chung cho hộp quà và mọi mảnh ruy băng (kích thước nằm trong ma trận từng instance). */
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
+/** Bóng đổ giả: tấm vuông nằm sát mặt đất, tô đốm tròn mềm. */
+const SHADOW_PLANE = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+/** Bóng rộng gấp chừng này lần cạnh hộp. */
+const SHADOW_SIZE = 2;
 
 /** Ma trận cục bộ của một mảnh (so với tâm hộp quà). */
 const partMatrix = (position: [number, number, number], rotationZ: number, scale: [number, number, number]) =>
@@ -56,6 +61,7 @@ const createGifts = (count: number) =>
       /** 0 = đang lộn nhào tự do, 1 = đã nằm yên trên đất. */
       settled: 0,
       colorSeed: Math.random(),
+      size,
       boxMatrix: new THREE.Matrix4().makeScale(size, size, size),
       ribbonMatrices: ribbonPartMatrices(size),
     };
@@ -73,6 +79,7 @@ export const GiftBoxes = () => {
   const themeColors = useThemeColors();
   const boxesRef = useRef<THREE.InstancedMesh>(null);
   const ribbonsRef = useRef<THREE.InstancedMesh>(null);
+  const shadowsRef = useRef<THREE.InstancedMesh>(null);
 
   const gifts = useMemo(() => createGifts(count), [count]);
 
@@ -87,7 +94,8 @@ export const GiftBoxes = () => {
   useFrame((_, delta) => {
     const boxes = boxesRef.current;
     const ribbons = ribbonsRef.current;
-    if (!boxes || !ribbons) return;
+    const shadows = shadowsRef.current;
+    if (!boxes || !ribbons || !shadows) return;
     const { sceneState } = useStore.getState();
 
     gifts.forEach((gift, i) => {
@@ -102,7 +110,15 @@ export const GiftBoxes = () => {
       gift.ribbonMatrices.forEach((part, j) => {
         ribbons.setMatrixAt(i * RIBBON_PARTS_PER_GIFT + j, instanceMatrix.multiplyMatrices(giftMatrix, part));
       });
+      // Bóng chỉ hiện khi hộp đã đáp xuống đất (scale theo `settled`, kèm chút nhỏ lại khi hộp còn ở trên cao)
+      const lift = Math.max(0, gift.currentPos.y - gift.targetPos.y);
+      const shadowScale = gift.size * SHADOW_SIZE * gift.settled * Math.max(0, 1 - lift / 6);
+      shadows.setMatrixAt(
+        i,
+        instanceMatrix.makeScale(shadowScale, 1, shadowScale).setPosition(gift.currentPos.x, GROUND_Y + 0.03, gift.currentPos.z),
+      );
     });
+    shadows.instanceMatrix.needsUpdate = true;
 
     boxes.instanceMatrix.needsUpdate = true;
     ribbons.instanceMatrix.needsUpdate = true;
@@ -115,6 +131,10 @@ export const GiftBoxes = () => {
       </instancedMesh>
       <instancedMesh ref={ribbonsRef} args={[UNIT_BOX, undefined, count * RIBBON_PARTS_PER_GIFT]} frustumCulled={false}>
         <meshStandardMaterial color={themeColors.gold} roughness={0.3} metalness={0.8} />
+      </instancedMesh>
+      {/* renderOrder nằm giữa nền tuyết (-1) và các lớp hạt trong suốt (0) */}
+      <instancedMesh ref={shadowsRef} args={[SHADOW_PLANE, undefined, count]} frustumCulled={false} renderOrder={-0.5}>
+        <meshBasicMaterial color="#000000" map={SOFT_SPOT_TEXTURE} transparent opacity={0.55} depthWrite={false} />
       </instancedMesh>
     </>
   );

@@ -6,6 +6,9 @@ export const CONFIG = {
     ornaments: 70,
     lights: 220,
     gifts: 34,
+    candyCanes: 18,
+    bells: 20,
+    miniStars: 24,
   },
   colors: {
     warmLight: '#FFD54F',

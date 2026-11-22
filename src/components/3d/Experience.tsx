@@ -4,17 +4,21 @@ import { Selection } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useStore } from '../../store';
 import { ChristmasBalls } from './ChristmasBalls';
+import { DecorOrnaments } from './DecorOrnaments';
 import { FairyLights } from './FairyLights';
 import { Foliage } from './Foliage';
+import { Garland } from './Garland';
 import { GiftBoxes } from './GiftBoxes';
 import { PhotoOrnaments } from './photos/PhotoOrnaments';
 import { Atmosphere } from './scene/Atmosphere';
 import { CameraRig } from './scene/CameraRig';
 import { Fireworks } from './scene/Fireworks';
+import { FormationBurst } from './scene/FormationBurst';
 import { PostEffects } from './scene/PostEffects';
 import { SceneLighting } from './scene/SceneLighting';
 import { TopStar } from './TopStar';
 import { TreeBase } from './TreeBase';
+import { useFormationTracker } from './shared/formation';
 
 /** Tốc độ cây tự quay (rad/giây). */
 const TREE_SPIN_SPEED = 0.2;
@@ -28,6 +32,7 @@ export const Experience = () => {
   const treeRef = useRef<THREE.Group>(null);
   /** Tốc độ quay hiện tại, và yêu cầu xoay gần nhất đã xử lý (so tham chiếu để nhận ra yêu cầu mới). */
   const spin = useRef<{ speed: number; handled: object | null }>({ speed: TREE_SPIN_SPEED, handled: null });
+  useFormationTracker();
 
   // Cây quay chậm liên tục, nhấn ← → thì quay vút theo hướng đó; dừng lại khi đang phóng to ảnh
   useFrame((_, delta) => {
@@ -50,6 +55,8 @@ export const Experience = () => {
       <group ref={treeRef} position={[0, 0.5, 0]}>
         <Foliage />
         <ChristmasBalls />
+        <DecorOrnaments />
+        <Garland />
         <FairyLights />
         <GiftBoxes />
         <TopStar />
@@ -57,6 +64,7 @@ export const Experience = () => {
         <PhotoOrnaments />
       </group>
 
+      <FormationBurst />
       <Fireworks />
       <PostEffects />
     </Selection>

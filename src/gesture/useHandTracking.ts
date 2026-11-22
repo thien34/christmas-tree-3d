@@ -2,7 +2,7 @@ import { useEffect, type RefObject } from 'react';
 import type { GestureRecognizer, GestureRecognizerResult } from '@mediapipe/tasks-vision';
 import { FIREWORKS_COOLDOWN_MS, GESTURE_MIN_SCORE, THUMB_UP_COOLDOWN_MS } from '../constants/config';
 import { cycleTheme, launchFireworks, setStatus, useStore } from '../store';
-import { detectPinch, isVictoryPose } from './handGestures';
+import { createPinchTracker, isVictoryPose } from './handGestures';
 
 /** Phiên bản file WASM phải khớp với phiên bản thư viện; Vite điền sẵn từ package.json (xem vite.config.ts). */
 const WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${__MEDIAPIPE_VERSION__}/wasm`;
@@ -42,6 +42,7 @@ const createGestureHandler = () => {
   let lastFireworks = 0;
   /** Lúc bắt đầu giữ ✌️; null khi không giữ. */
   let victorySince: number | null = null;
+  const trackPinch = createPinchTracker();
 
   return (result: GestureRecognizerResult, now: number) => {
     const { pinch: activePinch, debugMode } = useStore.getState();
@@ -49,11 +50,12 @@ const createGestureHandler = () => {
     const gesture = result.gestures[0]?.[0];
     const isConfident = gesture !== undefined && gesture.score > GESTURE_MIN_SCORE;
 
-    // Chụm tay: chỉ ghi lại lúc bắt đầu (kèm vị trí) và lúc thả ra
-    const pinch = landmarks ? detectPinch(landmarks) : null;
-    if ((pinch !== null) !== (activePinch !== null)) useStore.setState({ pinch });
+    // Chụm tay: chỉ ghi lại lúc bắt đầu (kèm vị trí) và lúc thả ra; tracker đã lọc rung và khung hình hụt
+    const pinch = trackPinch(landmarks, now);
+    if (pinch !== activePinch) useStore.setState({ pinch });
 
-    if (isConfident) {
+    // Đang chụm thì bỏ qua xoè/nắm tay: lúc chụm, model hay đoán nhầm thành nắm tay làm cây đổi trạng thái
+    if (isConfident && !pinch) {
       const name = gesture.categoryName;
       if (name === 'Open_Palm') useStore.setState({ sceneState: 'CHAOS' });
       if (name === 'Closed_Fist') useStore.setState({ sceneState: 'FORMED' });

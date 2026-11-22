@@ -1,12 +1,26 @@
-import { GradientTexture, Stars } from '@react-three/drei';
+import { Stars } from '@react-three/drei';
+import { Aurora } from './Aurora';
+import { DistantHills } from './DistantHills';
+import { Moon } from './Moon';
+import { ShootingStars } from './ShootingStars';
+import { SkyDome } from './SkyDome';
+import { SnowBokeh } from './SnowBokeh';
 import { Snowfall } from './Snowfall';
 
-/** Khung cảnh quanh cây: bầu trời đêm chuyển màu, sao và tuyết rơi. */
+/**
+ * Khung cảnh quanh cây, từ xa vào gần: bầu trời chuyển màu theo theme, sao, trăng, cực quang, sao băng,
+ * dãy núi và rừng thông xa (che bớt sao ở chân trời), tuyết rơi, và vài bông tuyết sát ống kính.
+ * Sao nằm xa hơn vòng núi để núi che được sao.
+ */
 export const Atmosphere = () => (
   <>
-    {/* Từ đỉnh trời xuống: xanh đêm đậm, sáng dần về phía chân trời, rồi tối lại ở mặt đất */}
-    <GradientTexture attach="background" stops={[0, 0.55, 1]} colors={['#070d24', '#1b2a52', '#080c18']} />
-    <Stars radius={100} depth={50} count={4000} factor={5} saturation={0.2} fade speed={1} />
+    <SkyDome />
+    <Stars radius={215} depth={60} count={4000} factor={9} saturation={0.2} fade speed={1} />
+    <Moon />
+    <Aurora />
+    <ShootingStars />
+    <DistantHills />
     <Snowfall />
+    <SnowBokeh />
   </>
 );

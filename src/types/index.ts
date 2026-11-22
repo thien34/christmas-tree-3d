@@ -14,6 +14,12 @@ export interface ThemeColors {
   ornamentColors: string[];
   /** Màu hộp quà. */
   giftColors: string[];
+  /** Bầu trời: đỉnh trời, chân trời, dưới chân trời. */
+  sky: [string, string, string];
+  /** Nền tuyết từ gốc cây ra xa: sát gốc (hắt ánh đèn), gần, xa, mép. */
+  ground: [string, string, string, string];
+  /** Hai màu của dải cực quang (chân dải, ngọn dải). */
+  aurora: [string, string];
 }
 
 /** Toạ độ màn hình chuẩn hoá 0–1, gốc ở góc trên bên trái. */
